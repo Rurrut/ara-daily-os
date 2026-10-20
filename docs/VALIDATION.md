@@ -10,7 +10,7 @@
 - 정리된 소스에서 Android 2.7 빌드
 - 모의 HTTP를 실제 Android 통신 클래스에 주입하는 노션 회귀 검사 16개
 
-실행 결과는 첫 공개 커밋을 준비하는 과정에서 확인합니다. 자동 검사는 `.github/workflows/check.yml`에서 모바일 테스트와 Windows 빌드를 수행합니다.
+위 항목은 정리한 저장소의 소스에서 다시 실행해 통과했습니다. GitHub 자동 검사에서도 모바일 테스트와 Windows 빌드를 통과했습니다. 자동 검사 설정은 `.github/workflows/check.yml`에 있습니다.
 
 ## 이전 작업에서 확인한 항목
 
