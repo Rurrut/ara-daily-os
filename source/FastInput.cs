@@ -9,7 +9,7 @@ namespace Ara {
   ContextMenuStrip categoryMenu;
   public ContextMenuStrip CurrentCategoryMenu{get{return categoryMenu;}}
   protected override void Dispose(bool disposing){if(disposing&&categoryMenu!=null){categoryMenu.Dispose();categoryMenu=null;}base.Dispose(disposing);}
-  void RegenerateCore(DateTime time){PlanHistory.Reset(Day);Day.Wake=GridEngine.Snap(time);Day.GridBase=GridEngine.Generate(Data,Day);Day.GridReady=true;Day.StartAnchoredMeals=Data.ScheduleRevision>=2;}
+  void RegenerateCore(DateTime time){PlanHistory.Reset(Day);Day.Wake=GridEngine.Snap(time);Day.WakeConfirmed=true;Day.GridBase=GridEngine.Generate(Data,Day);Day.GridReady=true;Day.StartAnchoredMeals=Data.ScheduleRevision>=2;}
   public void GenerateAt(DateTime time){Diagnostics.Action("generate",time.ToString("o"));Change(()=>RegenerateCore(time));Board.SetSelection(null);Board.Jump(Day.Wake.AddHours(-1));}
   public void SetWakeCell(CellSelection selected){
    if(selected==null)return;DateTime start=Board.TimeAt(selected.First);Diagnostics.Action("wake-cell",start.ToString("o"));

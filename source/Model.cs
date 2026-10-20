@@ -18,6 +18,7 @@ namespace Ara {
  [DataContract] public class Day {
   [DataMember] public string Date;
   [DataMember] public DateTime Wake;
+  [DataMember] public bool? WakeConfirmed;
   [DataMember] public Dictionary<string,DateTime> Actual = new Dictionary<string,DateTime>();
   [DataMember] public List<string> Done = new List<string>();
   [DataMember] public List<string> Notified = new List<string>();
@@ -62,6 +63,9 @@ namespace Ara {
   [DataMember] public int ReminderMinutes = 5;
   [DataMember] public bool Notifications = true;
   [DataMember] public bool DarkMode;
+  [DataMember] public decimal? BlankSatisfactionValue;
+  [DataMember] public bool ExcludeBlankSatisfaction;
+  public decimal BlankSatisfaction{get{return BlankSatisfactionValue??2;}}
   [DataMember] public List<CategoryDefinition> CategorySettings;
   [DataMember] public string WorkLink = "";
   [DataMember] public string StudyLink = "";
@@ -84,7 +88,7 @@ namespace Ara {
   public Day GetDay(DateTime date) {
    string key=date.ToString("yyyy-MM-dd");
    var d=Days.Find(x=>x.Date==key);
-   if(d==null) { d=new Day{Date=key,Wake=date.Date.AddHours(8)}; Days.Add(d); }
+   if(d==null) { d=new Day{Date=key,Wake=date.Date.AddHours(8),WakeConfirmed=false}; Days.Add(d); }
    return d;
   }
  }
@@ -157,6 +161,7 @@ namespace Ara {
    return p;
   }
   public static void Validate(State s) {
+   if(s!=null&&(s.BlankSatisfaction<0||s.BlankSatisfaction>5))throw new InvalidDataException("빈칸 만족도는 0~5점입니다.");
    if(s==null || s.Version!=1 || s.Template==null || s.Template.Count==0 || s.Template.Count>100 || s.Days==null || s.Tasks==null)throw new InvalidDataException("지원하지 않거나 잘못된 데이터입니다.");
    if(s.DayMinutes<60 || s.DayMinutes>1440 || s.ShrinkThreshold<1 || s.ShrinkThreshold>240 || s.ReminderMinutes<0 || s.ReminderMinutes>120 || s.FocusMinutes<1 || s.FocusMinutes>240)throw new InvalidDataException("설정 범위가 올바르지 않습니다.");
    CategoryCatalog.Validate(s);

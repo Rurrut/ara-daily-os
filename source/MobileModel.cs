@@ -27,6 +27,9 @@ namespace Ara {
   [DataMember] public string date,revision;
   [DataMember] public int wake,sleep,target,lightsStart,overflow;
   [DataMember] public decimal total,satisfactionAverage;
+  [DataMember] public int satisfactionMinutes;
+  [DataMember] public decimal blankSatisfaction;
+  [DataMember] public bool excludeBlankSatisfaction,wakeConfirmed;
    [DataMember] public decimal? adherenceScore;
    [DataMember] public int adherenceCount;
    [DataMember] public string adherenceDetails;
@@ -40,17 +43,17 @@ namespace Ara {
   public static byte[] Json<T>(T value){using(var m=new MemoryStream()){new DataContractJsonSerializer(typeof(T)).WriteObject(m,value);return m.ToArray();}}
   public static T Read<T>(byte[] body){using(var m=new MemoryStream(body))return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(m);}
   public static string Hash(byte[] body){using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(body)).Replace("-","").ToLowerInvariant();}
-  public static string CommandHash(PhoneCommand command){var copy=Read<PhoneCommand>(Json(command));copy.baseRevision="";if(new[]{"resize","satisfaction","category-save"}.Contains(command.op))return Hash(Json(copy));return Hash(Json(Read<LegacyPhoneCommand>(Json(copy))));}
+  public static string CommandHash(PhoneCommand command){var copy=Read<PhoneCommand>(Json(command));copy.baseRevision="";if(new[]{"resize","satisfaction","category-save","satisfaction-settings"}.Contains(command.op))return Hash(Json(copy));return Hash(Json(Read<LegacyPhoneCommand>(Json(copy))));}
   public static DateTime Date(string key){DateTime date;if(!DateTime.TryParseExact(key,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,out date))throw new InvalidDataException("날짜를 확인해 주세요.");return date;}
   public static PhoneDay Snapshot(State state,string key){
    var s=Store.Clone(state);var day=s.GetDay(Date(key));var plan=GridEngine.Build(s,day);DateTime origin=day.Wake.Date;Func<DateTime,int> index=t=>(int)((t-origin).TotalMinutes/10);
    Func<CellBlock,PhoneBlock> block=x=>new PhoneBlock{id=x.Id,name=x.Name,category=x.Category,mealId=x.MealId,templateId=x.TemplateId,prepFor=x.PrepFor,start=index(x.Start),count=x.Count,score=x.Score,satisfaction=x.Satisfaction};
-   var ah=Adherence.Report(day);var view=new PhoneDay{adherenceScore=Adherence.Score(day),adherenceCount=Convert.ToInt32(ah["evaluated_actions"]),adherenceDetails=JsonMap.Write(ah["actions"]),date=key,wake=index(day.Wake),sleep=index(Adaptive.EstimatedSleep(s,day,plan)),target=index(Adaptive.Target(s,day)),overflow=plan.Overflow,total=GridEngine.Total(day),categories=CategoryCatalog.Keys(s),categorySettings=s.CategorySettings,satisfactionAverage=GridEngine.SatisfactionAverage(s,day,plan),adjustments=plan.Changes.ToArray(),planned=plan.DisplayBlocks.Select(block).ToList(),actual=day.Records.OrderBy(x=>x.Start).Select(block).ToList()};view.lightsStart=view.sleep-12;view.revision=Hash(Json(view));return view;
+   var ah=Adherence.Report(day);var view=new PhoneDay{adherenceScore=Adherence.Score(day),adherenceCount=Convert.ToInt32(ah["evaluated_actions"]),adherenceDetails=JsonMap.Write(ah["actions"]),date=key,wake=index(day.Wake),wakeConfirmed=SatisfactionPolicy.WakeConfirmed(day),blankSatisfaction=s.BlankSatisfaction,excludeBlankSatisfaction=s.ExcludeBlankSatisfaction,satisfactionMinutes=SatisfactionPolicy.Calculate(s,day,Adaptive.EstimatedSleep(s,day,plan),DateTime.Now).Minutes,sleep=index(Adaptive.EstimatedSleep(s,day,plan)),target=index(Adaptive.Target(s,day)),overflow=plan.Overflow,total=GridEngine.Total(day),categories=CategoryCatalog.Keys(s),categorySettings=s.CategorySettings,satisfactionAverage=GridEngine.SatisfactionAverage(s,day,plan),adjustments=plan.Changes.ToArray(),planned=plan.DisplayBlocks.Select(block).ToList(),actual=day.Records.OrderBy(x=>x.Start).Select(block).ToList()};view.lightsStart=view.sleep-12;decimal metric=view.satisfactionAverage;int elapsed=view.satisfactionMinutes;view.satisfactionAverage=0;view.satisfactionMinutes=0;view.revision=Hash(Json(view));view.satisfactionAverage=metric;view.satisfactionMinutes=elapsed;return view;
   }
  }
  public static class PhoneEditing {
   static void Defaults(CellBlock b){b.Priority=b.Category=="존2"?1:b.Category=="웨이트"?2:b.Category=="학습"?3:b.Category=="휴식"?5:0;b.Minimum=b.Category=="존2"?2:b.Category=="웨이트"||b.Category=="학습"?3:b.Category=="휴식"?1:b.Count;}
-  static void Wake(State s,Day d,PhoneCommand c){PlanHistory.Reset(d);if(c.first>=144)throw new InvalidDataException("기상 날짜를 먼저 바꿔 주세요.");d.Wake=d.Wake.Date.AddMinutes(c.first*10);d.GridBase=GridEngine.Generate(s,d);d.GridReady=true;d.StartAnchoredMeals=true;if(c.lane==1){var old=d.Records.Find(x=>GridEngine.Overlap(x,d.Wake,d.Wake.AddMinutes(10)));decimal score=old==null?0:old.Score;d.Records.RemoveAll(x=>x.Category=="기상");GridEngine.SetRange(d.Records,new CellBlock{Id=Guid.NewGuid().ToString("N"),Start=d.Wake,Count=1,Name="기상",Category="기상",Score=score,Satisfaction=old==null?2:old.Satisfaction});}}
+  static void Wake(State s,Day d,PhoneCommand c){PlanHistory.Reset(d);if(c.first>=144)throw new InvalidDataException("기상 날짜를 먼저 바꿔 주세요.");d.Wake=d.Wake.Date.AddMinutes(c.first*10);d.WakeConfirmed=true;d.GridBase=GridEngine.Generate(s,d);d.GridReady=true;d.StartAnchoredMeals=true;if(c.lane==1){var old=d.Records.Find(x=>GridEngine.Overlap(x,d.Wake,d.Wake.AddMinutes(10)));decimal score=old==null?0:old.Score;d.Records.RemoveAll(x=>x.Category=="기상");GridEngine.SetRange(d.Records,new CellBlock{Id=Guid.NewGuid().ToString("N"),Start=d.Wake,Count=1,Name="기상",Category="기상",Score=score,Satisfaction=old==null?2:old.Satisfaction});}}
   static void Put(Day d,GridPlan p,PhoneCommand c,CellBlock entry){
    if(c.lane==0){d.GridBase=p.DisplayBlocks.Select(x=>x.Copy()).ToList();entry.Score=0;GridEngine.SetRange(d.GridBase,entry);return;}
    var originals=d.Records.Select(x=>x.Copy()).ToList();DateTime cursor=entry.Start;bool first=true;
@@ -60,6 +63,7 @@ namespace Ara {
    }
   }
   public static void Apply(State s,Day d,PhoneCommand c){
+   if(c.op=="satisfaction-settings"){if(c.satisfaction<0||c.satisfaction>5)throw new InvalidDataException("빈칸 만족도는 0~5점입니다.");s.BlankSatisfactionValue=c.satisfaction;s.ExcludeBlankSatisfaction=c.hidden;return;}
    if(c.lane<0||c.lane>1||c.first<0||c.last<c.first||c.last>=288||c.score < -100000||c.score>100000)throw new InvalidDataException("시간 칸 또는 점수를 확인해 주세요.");
    if(!string.IsNullOrEmpty(c.mealId)&&!new[]{"b1","b6","b10","b15","b16"}.Contains(c.mealId))throw new InvalidDataException("끼니 번호를 확인해 주세요.");
    var p=GridEngine.Build(s,d);DateTime start=d.Wake.Date.AddMinutes(c.first*10);int count=c.last-c.first+1;

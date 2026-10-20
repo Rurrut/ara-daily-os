@@ -146,7 +146,7 @@ namespace Ara {
    if(result.Blocks.Any(x=>x.Start<d.Wake.Date||x.End>d.Wake.Date.AddDays(2)))throw new InvalidOperationException("계획이 표시 범위(당일과 다음날)를 벗어납니다.");
    return result;
   }
-  public static decimal SatisfactionAverage(State s,Day d,GridPlan p){var finish=Adaptive.EstimatedSleep(s,d,p);int count=Math.Max(1,(int)Math.Ceiling((finish-d.Wake).TotalMinutes/10));decimal total=0;for(int i=0;i<count;i++){var at=d.Wake.AddMinutes(i*10);var record=d.Records.FirstOrDefault(b=>Overlap(b,at,at.AddMinutes(10)));total+=record==null?2:record.Satisfaction;}return total/count;}
+  public static decimal SatisfactionAverage(State s,Day d,GridPlan p){return SatisfactionPolicy.Calculate(s,d,Adaptive.EstimatedSleep(s,d,p),DateTime.Now).Average;}
   public static decimal SatisfactionAverage(Day d){int count=d.Records.Sum(x=>x.Count);return count==0?0:d.Records.Sum(x=>x.Satisfaction*x.Count)/count;}
   public static decimal Total(Day d){return d.Records.Sum(x=>x.Score*x.Count);}
   public static void SetScore(List<CellBlock> list,DateTime start,int count,decimal score,bool satisfaction=false){

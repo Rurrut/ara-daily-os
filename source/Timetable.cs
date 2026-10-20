@@ -17,6 +17,7 @@ namespace Ara {
   public const int Header=32,HourHeight=70,Gutter=100,Hours=48;
   public DateTime Origin{get;set;}
   public DateTime? EstimatedSleep{get;set;}
+  public decimal BlankSatisfaction=2;public bool IncludeBlankSatisfaction=true;public DateTime SatisfactionFrom=DateTime.MinValue,SatisfactionTo=DateTime.MaxValue;
   DateTime currentTime=DateTime.Now;
   public int CurrentIndex{get{int index=(int)Math.Floor((currentTime-Origin).TotalMinutes/10);return index>=0&&index<Hours*6?index:-1;}}
   public void SetCurrentTime(DateTime time){int previous=CurrentIndex;currentTime=time;if(previous!=CurrentIndex)Invalidate();}
@@ -140,9 +141,9 @@ namespace Ara {
      TextRenderer.DrawText(g,"실제",Font,new Rectangle(57,y+HourHeight/2,43,HourHeight/2),Theme.Muted,TextFormatFlags.VerticalCenter|TextFormatFlags.HorizontalCenter);
      for(int l=0;l<2;l++)for(int col=0;col<6;col++){
       int idx=h*6+col;Rectangle r=CellRect(l,idx);var block=At(l,idx);bool lights=IsLightsOut(idx);if(lights){using(var night=new SolidBrush(LightsColor(l==0?Theme.Surface:Theme.ActualSurface)))g.FillRectangle(night,r.X+1,r.Y+1,r.Width-1,r.Height-1);}
-      bool emptySatisfaction=block==null&&l==1&&DisplayMode=="satisfaction";if(emptySatisfaction)block=new CellBlock{Category="",Name="",Satisfaction=2};
+      bool emptySatisfaction=block==null&&l==1&&DisplayMode=="satisfaction"&&IncludeBlankSatisfaction&&TimeAt(idx)>=SatisfactionFrom&&TimeAt(idx)<SatisfactionTo;if(emptySatisfaction)block=new CellBlock{Category="",Name="",Satisfaction=BlankSatisfaction};
       if(block!=null){var blockFill=CategoryCatalog.Fill(Catalog,block,DisplayMode,l==1);Color blockInk=blockFill.R*.2126+blockFill.G*.7152+blockFill.B*.0722<140?Color.White:Color.FromArgb(32,59,53);using(var fill=new SolidBrush(lights?LightsColor(blockFill):blockFill))g.FillRectangle(fill,r.X+1,r.Y+1,r.Width-1,r.Height-1);
-       string caption=emptySatisfaction?"2":CategoryCatalog.Caption(Catalog,block);
+       string caption=emptySatisfaction?BlankSatisfaction.ToString("0.#"):CategoryCatalog.Caption(Catalog,block);
        if(l==1&&!emptySatisfaction){string ratings=block.Score.ToString("0.#")+"·"+block.Satisfaction.ToString("0.#")+"·"+(AdherenceScores.ContainsKey(idx)?AdherenceScores[idx].ToString("0.#"):"—");TextRenderer.DrawText(g,caption,Font,new Rectangle(r.X+3,r.Y+1,r.Width-6,r.Height/2),blockInk,TextFormatFlags.VerticalCenter|TextFormatFlags.HorizontalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine);TextRenderer.DrawText(g,ratings,Font,new Rectangle(r.X+3,r.Y+r.Height/2-1,r.Width-6,r.Height/2),blockInk,TextFormatFlags.VerticalCenter|TextFormatFlags.HorizontalCenter|TextFormatFlags.SingleLine);}else TextRenderer.DrawText(g,caption,Font,new Rectangle(r.X+5,r.Y+2,r.Width-9,r.Height-4),blockInk,TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine);
       }
       if(l==0&&EstimatedSleep.HasValue&&idx==Index(EstimatedSleep.Value)){

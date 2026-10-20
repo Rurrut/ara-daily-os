@@ -15,6 +15,7 @@ jobs:
       - run: node mobile/tests.cjs
       - run: node mobile/fixed-sleep-tests.cjs
       - run: node mobile/prep-record-tests.cjs
+      - run: node mobile/satisfaction-tests.cjs
   windows:
     runs-on: windows-latest
     steps:
