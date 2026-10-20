@@ -54,6 +54,14 @@ Android 2.7에서 인증 갱신·접근 권한·요청 거절·서버 오류를 
 
 코드: [`android/src/ara/daily/NotionHub.java`](../android/src/ara/daily/NotionHub.java), [`android/src/ara/daily/NotionFailure.java`](../android/src/ara/daily/NotionFailure.java)
 
+## 식사 준비를 기록했는데 ‘이른 끼니’ 오류가 났다
+
+2끼니를 일찍 먹은 뒤, 존2와 식사 사이의 빈 실제 칸에 ‘2끼니 준비’를 끌어다 놓으면 입력이 막혔다. 같은 순서로 재현해 보니, 일찍 먹은 식사에 맞춰 앞 계획을 줄이는 과정에서 새 준비 기록을 그 앞 활동을 실제로 했다는 증거로 잘못 판단하고 있었다.
+
+준비는 준비 기록으로 남기되, 앞 활동의 실행 여부를 판단하는 검사에서는 제외했다. 다른 실제 활동의 충돌 검사는 유지했다. 준비를 복사하거나 카테고리로 입력한 뒤에도 기존 기록과 위 계획이 바뀌지 않는지 검사했다. 회귀 검사는 모바일 10가지와 PC 2개를 추가했고, PC 전체 243개와 PC·모바일 계산 비교 907건을 통과했다.
+
+코드: [`source/Routine.cs`](../source/Routine.cs), [`mobile/prep-record-tests.cjs`](../mobile/prep-record-tests.cjs)
+
 ## 앞으로 남길 기록
 
 패치마다 긴 글을 쓰기보다 아래 네 가지만 짧게 남기려 합니다.

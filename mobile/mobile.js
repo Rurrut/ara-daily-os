@@ -187,7 +187,7 @@ function notionSheet(){if(E&&R&&(!A.online||R.pending())){showSheet('노션 · A
 }
 function updateSheet(){native?.checkUpdates?.();showSheet('앱 업데이트',root=>{
  const note=document.createElement('p');note.className='form-note';root.append(note);
- const paint=()=>{if(!native?.updateStatus){note.textContent='Android 1.6을 한 번 설치하면 이후 PC 연결로 화면 업데이트를 받을 수 있습니다. APK 변경은 앱 안에서 설치를 요청합니다.';return}try{const s=JSON.parse(native.updateStatus());note.textContent='사용 중인 화면 2026102001\n설치 버전 '+s.installedName+' · PC 버전 '+s.availableName+'\n'+(s.uiReady?'새 화면 준비됨 · 화면 다시 열기를 누르세요':s.busy?'업데이트 확인·다운로드 중':'화면 업데이트는 PC 연결 시 자동으로 준비됩니다')+(s.error?'\n'+s.error:'')}catch{note.textContent='업데이트 상태를 읽지 못했습니다'}};
+ const paint=()=>{if(!native?.updateStatus){note.textContent='Android 1.6을 한 번 설치하면 이후 PC 연결로 화면 업데이트를 받을 수 있습니다. APK 변경은 앱 안에서 설치를 요청합니다.';return}try{const s=JSON.parse(native.updateStatus());note.textContent='사용 중인 화면 2026102002\n설치 버전 '+s.installedName+' · PC 버전 '+s.availableName+'\n'+(s.uiReady?'새 화면 준비됨 · 화면 다시 열기를 누르세요':s.busy?'업데이트 확인·다운로드 중':'화면 업데이트는 PC 연결 시 자동으로 준비됩니다')+(s.error?'\n'+s.error:'')}catch{note.textContent='업데이트 상태를 읽지 못했습니다'}};
  paint();root.append(button('PC에서 업데이트 확인',()=>{native?.checkUpdates?.();paint()},'wide secondary'),button('준비된 화면 다시 열기',()=>{if(A.busy||A.gesture||A.conflict){toast('입력 또는 충돌 확인을 먼저 마쳐 주세요');return}native?.reloadUi?.()},'wide secondary'),button('새 APK 설치',()=>{native?.installUpdate?.();paint()},'wide secondary'));
  const timer=setInterval(()=>{if($('sheet').hidden||$('sheetTitle').textContent!=='앱 업데이트'){clearInterval(timer);return}paint()},1000);
 })}

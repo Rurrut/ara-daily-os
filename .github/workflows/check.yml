@@ -14,6 +14,7 @@ jobs:
           node-version: '22'
       - run: node mobile/tests.cjs
       - run: node mobile/fixed-sleep-tests.cjs
+      - run: node mobile/prep-record-tests.cjs
   windows:
     runs-on: windows-latest
     steps:

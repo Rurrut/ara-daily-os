@@ -45,7 +45,7 @@ namespace Ara {
    MobileTests.Run(Check,dir);
    MealGapTests.Run(Check,dir);
    DarkModeTests.Run(Check,dir);
-   HistoryTests.Run(Check,dir);
+   HistoryTests.Run(Check,dir);PrepRecordTests.Run(Check,dir);
    PlanEditTests.Run(Check,dir);
    QrNowSleepTests.Run(Check,dir);
    DiagnosticTests.Run(Check,dir);

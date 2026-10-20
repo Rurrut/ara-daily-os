@@ -54,7 +54,7 @@ namespace Ara {
      var prep=string.IsNullOrEmpty(original.MealId)?null:p.Blocks.Find(x=>x.PrepFor==original.MealId);DateTime boundary=recorded.Start.AddMinutes(prep==null?0:-prep.Count*10);
      foreach(var preceding in p.Blocks.Where(x=>x.Start<previousStart&&x.End>boundary&&(string.IsNullOrEmpty(original.MealId)||x.PrepFor!=original.MealId)).ToList()){
       if(!string.IsNullOrEmpty(preceding.MealId)||!string.IsNullOrEmpty(preceding.PrepFor))throw new InvalidOperationException("이전 끼니·준비와 실제 식사 시각이 겹칩니다.");
-      if(d.Records.Any(r=>string.IsNullOrEmpty(r.MealId)&&GridEngine.Overlap(r,preceding.Start,preceding.End)))throw new InvalidOperationException("이른 끼니가 이미 기록한 활동과 겹칩니다. 실제 기록을 확인해 주세요.");
+      if(d.Records.Any(r=>string.IsNullOrEmpty(r.MealId)&&r.Category!="끼니 준비"&&string.IsNullOrEmpty(r.PrepFor)&&GridEngine.Overlap(r,preceding.Start,preceding.End)))throw new InvalidOperationException("이른 끼니가 이미 기록한 활동과 겹칩니다. 실제 기록을 확인해 주세요.");
       int count=Math.Max(0,(int)((boundary-preceding.Start).TotalMinutes/10));p.Changes.Add(preceding.Caption+" −"+((preceding.Count-count)*10)+"분 (이른 끼니)");preceding.Count=count;
      }
     }
@@ -69,13 +69,14 @@ namespace Ara {
    if(d.ShowerAfterSecond){var second=p.Blocks.Find(x=>x.MealId=="b6");var shower=p.Blocks.Find(x=>x.TemplateId=="b5"||x.Name=="샤워");var actual=d.Records.Find(x=>x.MealId=="b6"&&x.Start>=d.Wake);if(second!=null&&shower!=null&&actual!=null&&!p.FixedIds.Contains(shower.Id)&&!d.Records.Any(x=>x.TemplateId=="b5"||x.Name=="샤워")){DateTime end=Adaptive.MealEnd(d,p,"b6").Value;shower.Start=end;foreach(var next in p.Blocks.Where(x=>x!=shower&&x.Start>=second.End&&x.Start<shower.End).OrderBy(x=>x.Start).ToList()){if(p.FixedIds.Contains(next.Id)||d.Records.Any(x=>GridEngine.Overlap(x,next.Start,next.End)))throw new InvalidOperationException("식사 뒤 샤워가 기록한 활동과 겹칩니다. 실제 기록을 확인해 주세요.");int delay=(int)(shower.End-next.Start).TotalMinutes;DateTime boundary=next.Start;foreach(var later in p.Blocks.Where(x=>x!=shower&&x.Start>=boundary))later.Start=later.Start.AddMinutes(delay);}p.Changes.Add("2끼니 실제 종료 후 샤워 20분 유지");}}
    var orderedMeals=meals.Select(x=>p.Blocks.Find(b=>b.Id==x.Id)).Where(x=>x!=null).ToList();
    for(int i=1;i<orderedMeals.Count;i++)if(orderedMeals[i].Start<orderedMeals[i-1].End)throw new InvalidOperationException("끼니 순서 또는 시간이 겹칩니다. 실제 끼니 시각을 확인해 주세요.");
+   // Prep is a separate actual fact, not evidence that the preceding activity was performed.
    // Resolve an early meal by trimming only unrecorded overlapping preceding plans, never meal anchors.
    p.Blocks=p.Blocks.Where(x=>x.Count>0).OrderBy(x=>x.Start).ToList();
    for(int i=0;i<p.Blocks.Count-1;i++){
     var a=p.Blocks[i];var b=p.Blocks[i+1];if(a.End<=b.Start)continue;
     if(!string.IsNullOrEmpty(a.MealId)||!string.IsNullOrEmpty(a.PrepFor))throw new InvalidOperationException("끼니·준비 계획이 겹칩니다: "+a.Caption+" "+a.Start.ToString("HH:mm")+"–"+a.End.ToString("HH:mm")+" / "+b.Caption+" "+b.Start.ToString("HH:mm")+"–"+b.End.ToString("HH:mm"));
     int newCount=Math.Max(0,(int)((b.Start-a.Start).TotalMinutes/10));
-    if(d.Records.Any(r=>string.IsNullOrEmpty(r.MealId)&&GridEngine.Overlap(r,a.Start,a.End)))throw new InvalidOperationException("이른 끼니가 이미 기록한 활동과 겹칩니다. 실제 기록을 확인해 주세요.");
+    if(d.Records.Any(r=>string.IsNullOrEmpty(r.MealId)&&r.Category!="끼니 준비"&&string.IsNullOrEmpty(r.PrepFor)&&GridEngine.Overlap(r,a.Start,a.End)))throw new InvalidOperationException("이른 끼니가 이미 기록한 활동과 겹칩니다. 실제 기록을 확인해 주세요.");
     p.Changes.Add(a.Caption+" −"+((a.Count-newCount)*10)+"분");a.Count=newCount;
    }
    p.Blocks=p.Blocks.Where(x=>x.Count>0).ToList();
