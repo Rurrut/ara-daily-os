@@ -1,0 +1,40 @@
+# Local state and credentials
+**/data/
+**/logs/
+**/.env
+**/.env.*
+!**/.env.example
+**/*oauth*.bin
+**/*pairing*.json
+**/*queue*.json
+**/state*.json
+**/*keystore*
+**/*.jks
+**/*.p12
+**/*.pfx
+**/*.pem
+**/private-key*
+
+# Build/test outputs
+/work/
+/build/
+/dist/
+/test-output/
+**/__pycache__/
+**/node_modules/
+*.exe
+*.apk
+*.idsig
+*.pending
+*.bak
+*.tmp
+*.log
+*.class
+*.dex
+*.zip
+
+# Editor/OS files
+.vs/
+.idea/
+.DS_Store
+Thumbs.db

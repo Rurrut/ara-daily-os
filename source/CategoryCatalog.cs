@@ -1,0 +1,19 @@
+﻿using System;
+using System.Linq;
+using System.IO;
+using System.Drawing;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+namespace Ara {
+ [DataContract] public class CategoryDefinition { [DataMember] public string name,label,color;[DataMember] public bool hidden,deleted; }
+ public static class CategoryCatalog {
+  public static bool ValidKey(string key){return GridEngine.Categories.Contains(key)||key!=null&&System.Text.RegularExpressions.Regex.IsMatch(key,"^c_[a-f0-9]{32}$");}
+  public static void Ensure(State s){if(s.CategorySettings==null)s.CategorySettings=new List<CategoryDefinition>();string[] colors={"#c38a38","#39845c","#4f78b6","#be913c","#b9a16e","#839e4b","#6e8e46","#a56d9d","#749083","#7a8993"};for(int i=0;i<GridEngine.Categories.Length;i++){string key=GridEngine.Categories[i];if(!s.CategorySettings.Any(x=>x!=null&&x.name==key))s.CategorySettings.Add(new CategoryDefinition{name=key,label=key,color=colors[i]});}}
+  public static void Validate(State s){Ensure(s);if(s.CategorySettings.Count>64||s.CategorySettings.Any(x=>x==null||!ValidKey(x.name)||string.IsNullOrWhiteSpace(x.label)||x.label.Length>30||!System.Text.RegularExpressions.Regex.IsMatch(x.color??"","^#[a-fA-F0-9]{6}$"))||s.CategorySettings.Select(x=>x.name).Distinct().Count()!=s.CategorySettings.Count||s.CategorySettings.Where(x=>!x.hidden).Select(x=>x.label.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=s.CategorySettings.Count(x=>!x.hidden))throw new InvalidDataException("카테고리 이름·색상·중복을 확인해 주세요.");foreach(var d in s.Days)if(d!=null&&new[]{d.GridBase,d.Records,d.PlanHistory}.Where(x=>x!=null).SelectMany(x=>x).Any(b=>b!=null&&!s.CategorySettings.Any(c=>c.name==b.Category)))throw new InvalidDataException("기록의 카테고리를 찾을 수 없습니다.");}
+  public static string[] Keys(State s,bool all=false){Ensure(s);return s.CategorySettings.Where(x=>all||!x.hidden&&!x.deleted).Select(x=>x.name).ToArray();}
+  public static string Label(IEnumerable<CategoryDefinition> settings,string key){var item=settings==null?null:settings.FirstOrDefault(x=>x.name==key);return item==null?key:item.label;}
+  public static string Caption(IEnumerable<CategoryDefinition> settings,CellBlock b){return string.IsNullOrWhiteSpace(b.Name)?Label(settings,b.Category):b.Name;}
+  public static void Save(State s,string key,string label,string color,bool hidden,int position){Ensure(s);if(string.IsNullOrEmpty(key))key="c_"+Guid.NewGuid().ToString("N");if(!ValidKey(key))throw new InvalidDataException("카테고리 번호를 확인해 주세요.");var item=s.CategorySettings.Find(x=>x.name==key);if(item==null){item=new CategoryDefinition{name=key};s.CategorySettings.Add(item);}item.label=(label??"").Trim();item.color=color;item.hidden=hidden;item.deleted=false;s.CategorySettings.Remove(item);s.CategorySettings.Insert(Math.Max(0,Math.Min(position,s.CategorySettings.Count)),item);Validate(s);}
+  public static Color Fill(IEnumerable<CategoryDefinition> settings,CellBlock b,string mode,bool actual){if(mode!="category"&&!actual)return Theme.Dark?Color.FromArgb(33,44,37):Color.FromArgb(234,238,235);Color color;double amount;if(mode=="focus"||mode=="satisfaction"){double score=(double)(mode=="focus"?b.Score:b.Satisfaction);amount=.06+.84*Math.Max(0,Math.Min(5,score))/5;color=mode=="focus"?Color.FromArgb(40,113,175):Color.FromArgb(168,83,142);}else{var item=settings==null?null:settings.FirstOrDefault(x=>x.name==b.Category);if(item==null)return Timetable.CategoryColor(b.Category);color=ColorTranslator.FromHtml(item.color);amount=Theme.Dark?.42:.25;}if(Theme.Dark&&(mode=="focus"||mode=="satisfaction"))color=mode=="focus"?Color.FromArgb(16,57,95):Color.FromArgb(89,30,76);Color baseColor=Theme.Dark?(mode=="category"?Color.FromArgb(20,28,24):Color.FromArgb(104,122,117)):Color.White;return Color.FromArgb((int)(baseColor.R*(1-amount)+color.R*amount),(int)(baseColor.G*(1-amount)+color.G*amount),(int)(baseColor.B*(1-amount)+color.B*amount));}
+ }
+}

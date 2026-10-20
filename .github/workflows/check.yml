@@ -1,0 +1,23 @@
+name: Build and tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node mobile/tests.cjs
+      - run: node mobile/fixed-sleep-tests.cjs
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Windows app
+        shell: powershell
+        run: .\Build.ps1
