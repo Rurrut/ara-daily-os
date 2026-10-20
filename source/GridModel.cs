@@ -25,6 +25,7 @@ namespace Ara {
  }
  public class GridPlan {
   public bool YogurtRestRelaxed;
+  public int? YogurtRestMinutes;
   public List<CellBlock> Blocks;
   public List<string> Changes=new List<string>();
   public int Saved,Overflow,FrontWaitSpent;

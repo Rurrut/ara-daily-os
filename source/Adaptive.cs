@@ -20,7 +20,7 @@ namespace Ara {
   public static DateTime? FourthMealEnd(Day d,GridPlan p){return MealEnd(d,p,"b15");}
   // The bedtime marker is a deadline, independent of meal delays.
   public static DateTime EstimatedSleep(State s,Day d,GridPlan p){return Target(s,d);}
-  public static DateTime RequiredFinish(State s,Day d,GridPlan p){var actual=d.Records.Where(x=>x.MealId=="b16"&&x.Start>=d.Wake).OrderBy(x=>x.Start).FirstOrDefault();var yogurt=actual??p.Blocks.Find(x=>x.MealId=="b16");var fourthEnd=FourthMealEnd(d,p);DateTime sleep=yogurt==null?Target(s,d):actual!=null||p.YogurtRestRelaxed?new[]{Target(s,d),yogurt.End}.Max():yogurt.Start.AddHours(1);if(fourthEnd.HasValue&&p.PostFourthRestMinutes.HasValue){var held=fourthEnd.Value.AddMinutes(p.PostFourthRestMinutes.Value);if(held>sleep)sleep=held;}return fourthEnd.HasValue&&sleep<fourthEnd.Value.AddHours(2)?fourthEnd.Value.AddHours(2):sleep;}
+  public static DateTime RequiredFinish(State s,Day d,GridPlan p){var actual=d.Records.Where(x=>x.MealId=="b16"&&x.Start>=d.Wake).OrderBy(x=>x.Start).FirstOrDefault();var yogurt=actual??p.Blocks.Find(x=>x.MealId=="b16");var fourthEnd=FourthMealEnd(d,p);DateTime sleep=yogurt==null?Target(s,d):actual!=null||p.YogurtRestRelaxed?new[]{Target(s,d),yogurt.End}.Max():yogurt.End.AddMinutes(p.YogurtRestMinutes??Math.Max(0,60-yogurt.Count*10));if(fourthEnd.HasValue&&p.PostFourthRestMinutes.HasValue){var held=fourthEnd.Value.AddMinutes(p.PostFourthRestMinutes.Value);if(held>sleep)sleep=held;}return fourthEnd.HasValue&&sleep<fourthEnd.Value.AddHours(2)?fourthEnd.Value.AddHours(2):sleep;}
 
   static DateTime End(Day d,GridPlan p){return p.Blocks.Select(x=>x.End).Concat(d.Records.Where(x=>x.Start>=d.Wake).Select(x=>x.End)).DefaultIfEmpty(d.Wake).Max();}
   static int Debt(State s,Day d,GridPlan p){return Math.Max(0,(int)Math.Ceiling((new[]{End(d,p),RequiredFinish(s,d,p)}.Max()-Target(s,d)).TotalMinutes));}
@@ -43,10 +43,10 @@ namespace Ara {
    var after=p.Blocks.Where(x=>!string.IsNullOrEmpty(x.MealId)&&x.Start>=boundary).OrderBy(x=>x.Start).FirstOrDefault();
    return before==null||after==null?int.MaxValue:Math.Max(0,(int)(after.Start-before.Start).TotalMinutes-180);
   }
-  static GridPlan Trial(GridPlan p){return new GridPlan{Blocks=p.Blocks.Select(x=>x.Copy()).ToList(),Changes=p.Changes.ToList(),FixedIds=new HashSet<string>(p.FixedIds),FutureFloor=p.FutureFloor,Saved=p.Saved,Overflow=p.Overflow,FrontWaitSpent=p.FrontWaitSpent,YogurtRestRelaxed=p.YogurtRestRelaxed,PostFourthRestMinutes=p.PostFourthRestMinutes};}
+  static GridPlan Trial(GridPlan p){return new GridPlan{Blocks=p.Blocks.Select(x=>x.Copy()).ToList(),Changes=p.Changes.ToList(),FixedIds=new HashSet<string>(p.FixedIds),FutureFloor=p.FutureFloor,Saved=p.Saved,Overflow=p.Overflow,FrontWaitSpent=p.FrontWaitSpent,YogurtRestRelaxed=p.YogurtRestRelaxed,YogurtRestMinutes=p.YogurtRestMinutes,PostFourthRestMinutes=p.PostFourthRestMinutes};}
   static int CommitBuffer(State s,Day d,GridPlan p,GridPlan trial,string reason){int before=Debt(s,d,p);MinimumMealGaps(d,trial);MinimumWeightGap(d,trial);PlanHistory.KeepFutureClear(trial);trial.Blocks=trial.Blocks.OrderBy(x=>x.Start).ToList();for(int i=1;i<trial.Blocks.Count;i++)if(trial.Blocks[i].Start<trial.Blocks[i-1].End)return 0;
    foreach(var old in p.Blocks){var updated=trial.Blocks.Find(x=>x.Id==old.Id);bool changed=updated==null||updated.Start!=old.Start||updated.Count!=old.Count;if(changed&&(p.FixedIds.Contains(old.Id)||Recorded(d,old)))return 0;}
-   int recovered=Math.Max(0,before-Debt(s,d,trial));if(recovered==0)return 0;p.Blocks=trial.Blocks;p.Changes=trial.Changes;p.FrontWaitSpent=trial.FrontWaitSpent;p.PostFourthRestMinutes=trial.PostFourthRestMinutes;p.YogurtRestRelaxed=trial.YogurtRestRelaxed;p.Saved+=recovered;p.Changes.Add(reason+" · "+recovered+"분 회복");return recovered;
+   int recovered=Math.Max(0,before-Debt(s,d,trial));if(recovered==0)return 0;p.Blocks=trial.Blocks;p.Changes=trial.Changes;p.FrontWaitSpent=trial.FrontWaitSpent;p.PostFourthRestMinutes=trial.PostFourthRestMinutes;p.YogurtRestRelaxed=trial.YogurtRestRelaxed;p.YogurtRestMinutes=trial.YogurtRestMinutes;p.Saved+=recovered;p.Changes.Add(reason+" · "+recovered+"분 회복");return recovered;
   }
   static int Remove(State s,Day d,GridPlan p,CellBlock block,DateTime cutoff){
    if(block==null||p.FixedIds.Contains(block.Id)||block.Start<cutoff||Recorded(d,block))return 0;var group=p.Blocks.Where(x=>x.Id==block.Id||(!string.IsNullOrEmpty(block.MealId)&&x.PrepFor==block.MealId)).ToList();if(group.Any(x=>x.Start<cutoff||Recorded(d,x)))return 0;var trial=Trial(p);var ids=group.Select(x=>x.Id).ToList();trial.Blocks.RemoveAll(x=>ids.Contains(x.Id));DateTime boundary=group.Max(x=>x.End);
@@ -84,6 +84,7 @@ namespace Ara {
     }
   }
   static void BedtimeRestBuffer(State s,Day d,GridPlan p){if(!p.PostFourthRestMinutes.HasValue||p.Blocks.Any(x=>x.MealId=="b16")||d.Records.Any(x=>x.MealId=="b16"&&x.Start>=d.Wake))return;int available=Math.Max(0,p.PostFourthRestMinutes.Value-120);int cut=Math.Min(available,(int)Math.Ceiling(Debt(s,d,p)/10.0)*10);if(cut<=0)return;var trial=Trial(p);trial.PostFourthRestMinutes-=cut;CommitBuffer(s,d,p,trial,"4끼니→취침 여유 −"+cut+"분 (식사 종료 후 최소 2시간)");}
+  static void EarlyYogurtGap(State s,Day d,GridPlan p,DateTime cutoff){var y=p.Blocks.Find(x=>x.MealId=="b16");if(y==null||p.YogurtRestRelaxed||p.FixedIds.Contains(y.Id)||y.Start<cutoff||Recorded(d,y))return;int rest=p.YogurtRestMinutes??Math.Max(0,60-y.Count*10);int cut=Math.Min(Math.Max(0,rest-30),(int)Math.Ceiling(Debt(s,d,p)/10.0)*10);if(cut<=0)return;var trial=Trial(p);trial.YogurtRestMinutes=rest-cut;CommitBuffer(s,d,p,trial,"요거트 종료→취침 여유 −"+cut+"분 (최소 30분 유지 · 우선 버퍼)");}
   static void YogurtBuffer(State s,Day d,GridPlan p,DateTime cutoff){var yogurt=p.Blocks.Find(x=>x.MealId=="b16");if(yogurt==null)return;int before=Debt(s,d,p);p.YogurtRestRelaxed=true;int recovered=Math.Max(0,before-Debt(s,d,p));if(recovered>0){p.Saved+=recovered;p.Changes.Add("요거트→수면 간격 생략 · 요거트 유지 · "+recovered+"분 회복");}if(Debt(s,d,p)>0)Remove(s,d,p,yogurt,cutoff);}
   static void RestoreOptionalYogurt(State s,Day d,GridPlan p,CellBlock yogurt,CellBlock prep,DateTime? fourthStart,DateTime cutoff){if(yogurt==null||p.Blocks.Any(x=>x.MealId=="b16")||d.Records.Any(x=>x.Start>=d.Wake&&x.MealId=="b16"))return;var fourth=p.Blocks.Find(x=>x.MealId=="b15");double shift=fourth!=null&&fourthStart.HasValue?(fourth.Start-fourthStart.Value).TotalMinutes:0;var candidate=yogurt.Copy();candidate.Start=candidate.Start.AddMinutes(shift);var group=new List<CellBlock>{candidate};if(prep!=null){var preparation=prep.Copy();preparation.Start=candidate.Start.AddMinutes(-preparation.Count*10);group.Add(preparation);}if(candidate.End>EstimatedSleep(s,d,p)||group.Any(x=>x.Start<cutoff||p.Blocks.Any(b=>GridEngine.Overlap(b,x.Start,x.End)))||p.Blocks.Any(x=>!string.IsNullOrEmpty(x.MealId)&&x.Start<candidate.Start&&candidate.Start<x.Start.AddHours(3)))return;p.Blocks.AddRange(group);p.Changes.Add("요거트 10분 유지 · 수면 예상 전 선택 가능");}
   public static void Rebalance(State s,Day d,GridPlan p){
@@ -100,6 +101,7 @@ namespace Ara {
     if(Debt(s,d,p)>0)PostShowerBuffer(s,d,p,cutoff);
     if(Debt(s,d,p)>0)MealBeforeShower(s,d,p,cutoff);
     if(Debt(s,d,p)>0)FrontWaitBuffer(s,d,p,cutoff,"재확인");
+    if(Debt(s,d,p)>0)EarlyYogurtGap(s,d,p,cutoff);
     if(Debt(s,d,p)>0)Remove(s,d,p,p.Blocks.Find(x=>x.MealId=="b10"),cutoff);
     if(Debt(s,d,p)>0)YogurtBuffer(s,d,p,cutoff);
     if(Debt(s,d,p)>0)BedtimeRestBuffer(s,d,p);
