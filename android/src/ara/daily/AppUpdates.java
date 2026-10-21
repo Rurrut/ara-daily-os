@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.*;
 
 public final class AppUpdates {
- public static final int UI_VERSION=2026102104, NATIVE_VERSION=22;
+ public static final int UI_VERSION=2026102105, NATIVE_VERSION=23;
  private static final ExecutorService IO=Executors.newSingleThreadExecutor();
  private static final AtomicBoolean BUSY=new AtomicBoolean();
  private static volatile String server="",token="",error="";
