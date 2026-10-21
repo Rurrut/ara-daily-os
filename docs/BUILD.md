@@ -12,6 +12,7 @@ node mobile/fixed-sleep-tests.cjs
 node mobile/prep-record-tests.cjs
 node mobile/satisfaction-tests.cjs
 node mobile/yogurt-gap-tests.cjs
+node mobile/checklist-tests.cjs
 ```
 
 첫 번째는 작은 DOM 대역으로 입력 흐름을 검증합니다. 실제 브라우저나 Android 터치를 검증하는 테스트와는 구분합니다. 두 번째는 96가지 기상·지연·식사 길이 조합으로 고정 취침, 실제 기록 보존, 요거트 종료 제한, 수면 알림, 만족도 집계 범위를 확인합니다.

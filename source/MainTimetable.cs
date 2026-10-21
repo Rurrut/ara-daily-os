@@ -49,7 +49,7 @@ namespace Ara {
    var edit=Row();edit.Controls.Add(Theme.Button("선택 칸 저장",(s,e)=>ApplyEditor(),true));edit.Controls.Add(Theme.Button("계획 가져오기",(s,e)=>CopyPlanFields()));edit.Controls.Add(Theme.Button("비우기",(s,e)=>ClearCells()));right.Controls.Add(edit,0,5);
    var satisfactionRow=Row();satisfactionRow.Controls.Add(Theme.Label("만족도",9));satisfactionPoints=new NumericUpDown{Minimum=0,Maximum=5,Value=2,Width=55};satisfactionPoints.AccessibleName="만족도 점수";satisfactionRow.Controls.Add(satisfactionPoints);satisfactionRow.Controls.Add(Theme.Button("만족도 저장",(s,e)=>ApplySatisfaction(satisfactionPoints.Value)));satisfactionRow.Controls.Add(Theme.Button("집계 설정",(s,e)=>SatisfactionSettings()));right.Controls.Add(satisfactionRow,0,6);
    var work=Row();work.Controls.Add(Theme.Button("작업 시작",(s,e)=>StartFocus("작업",true),true));work.Controls.Add(Theme.Button("학습 시작",(s,e)=>StartFocus("학습",true)));work.Controls.Add(Theme.Button("집중 종료",(s,e)=>Change(()=>Data.FocusEnd=null)));right.Controls.Add(work,0,7);focus=Theme.Label("집중 준비",9);right.Controls.Add(focus,0,8);
-   tasks=Theme.Grid();tasks.Columns.Add(new DataGridViewCheckBoxColumn{Name="done",HeaderText="완료",FillWeight=22});tasks.Columns.Add("text","과제");tasks.Columns[1].ReadOnly=true;tasks.CurrentCellDirtyStateChanged+=(s,e)=>{if(tasks.IsCurrentCellDirty)tasks.CommitEdit(DataGridViewDataErrorContexts.Commit);};tasks.CellValueChanged+=(s,e)=>{if(!refreshing&&e.RowIndex>=0&&e.ColumnIndex==0){string id=(string)tasks.Rows[e.RowIndex].Tag;bool check=Convert.ToBoolean(tasks.Rows[e.RowIndex].Cells[0].Value);Change(()=>{var t=Data.Tasks.Find(x=>x.Id==id);if(check&&!t.DoneDates.Contains(Day.Date))t.DoneDates.Add(Day.Date);if(!check)t.DoneDates.Remove(Day.Date);});}};right.Controls.Add(tasks,0,9);
+   tasks=Theme.Grid();tasks.Columns.Add(new DataGridViewCheckBoxColumn{Name="done",HeaderText="완료",FillWeight=22});tasks.Columns.Add("text","과제");tasks.Columns[1].ReadOnly=true;tasks.CurrentCellDirtyStateChanged+=(s,e)=>{if(tasks.IsCurrentCellDirty)tasks.CommitEdit(DataGridViewDataErrorContexts.Commit);};tasks.CellValueChanged+=(s,e)=>{if(!refreshing&&e.RowIndex>=0&&e.ColumnIndex==0){string id=(string)tasks.Rows[e.RowIndex].Tag;bool check=Convert.ToBoolean(tasks.Rows[e.RowIndex].Cells[0].Value);Change(()=>{var t=Data.Tasks.Find(x=>x.Id==id);if(check&&!t.DoneDates.Contains(Day.Date))t.DoneDates.Add(Day.Date);if(!check)t.DoneDates.Remove(Day.Date);});}};right.Controls.Add(tasks,0,9);SetupChecklistDrag();
    var todo=Row();taskText=new TextBox{Width=110,Margin=new Padding(0,8,3,0)};taskGroup=new ThemeComboBox{Width=55,DropDownStyle=ComboBoxStyle.DropDownList,Margin=new Padding(0,8,0,0)};taskGroup.Items.AddRange(new object[]{"작업","학습","생활"});taskGroup.SelectedIndex=0;todo.Controls.Add(taskText);todo.Controls.Add(taskGroup);var add=Theme.Button("추가",(s,e)=>AddTask());add.AutoSize=false;add.MinimumSize=new Size(55,30);add.Size=new Size(58,30);todo.Controls.Add(add);var remove=Theme.Button("제거",(s,e)=>RemoveTask());remove.AutoSize=false;remove.MinimumSize=new Size(55,30);remove.Size=new Size(58,30);todo.Controls.Add(remove);taskText.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Enter){AddTask();e.SuppressKeyPress=true;}};right.Controls.Add(todo,0,10);
    right.Controls.Add(Theme.Label("오늘의 메모 · 자동 저장",8),0,11);note=new TextBox{Multiline=true,Dock=DockStyle.Fill,ScrollBars=ScrollBars.Vertical};note.TextChanged+=(s,e)=>{if(!refreshing)noteDue=DateTime.Now.AddMilliseconds(700);};note.Leave+=(s,e)=>SaveNote();right.Controls.Add(note,0,12);right.Controls.Add(Theme.Label("위: 계획  /  아래: 실제  /  한 칸 10분",8),0,13);
    changes=Theme.Label("",8);changes.ForeColor=Theme.Muted;root.Controls.Add(changes,0,4);footer=Theme.Label("",8);footer.ForeColor=Theme.Muted;root.Controls.Add(footer,0,5);
@@ -87,7 +87,7 @@ namespace Ara {
    if(meal.SelectedIndex!=7&&GridEngine.MealName(b.Name))b.Category="식사";
    string[] meals=AssignmentDialog.MealValues;
    var existing=Board.At(selected.Lane,selected.First);
-   if(existing!=null&&existing.Start==b.Start&&existing.Count==b.Count){b.Id=existing.Id;b.TemplateId=existing.TemplateId;b.PrepFor=b.Category=="끼니 준비"?existing.PrepFor:"";}
+   if(existing!=null&&existing.Start==b.Start&&existing.Count==b.Count){b.Id=existing.Id;b.TaskId=existing.TaskId;b.TemplateId=existing.TemplateId;b.PrepFor=b.Category=="끼니 준비"?existing.PrepFor:"";}
    if(b.Category=="식사")b.MealId=meal.SelectedIndex>0?meals[meal.SelectedIndex]:GridEngine.DetectMeal(Day,GridPlan,b);
    Defaults(b);SaveEntry(selected,b);
   }
@@ -103,7 +103,7 @@ namespace Ara {
    var existing=Board.At(selected.Lane,selected.First);
    using(var dialog=new AssignmentDialog(selected,Board.TimeAt(selected.First),preset??existing,GridPlan.DisplayBlocks,Data)){
     if(dialog.ShowDialog(this)!=DialogResult.OK)return;var b=dialog.Result;
-    if(existing!=null&&existing.Start==b.Start&&existing.Count==b.Count)b.Id=existing.Id;
+    if(existing!=null&&existing.Start==b.Start&&existing.Count==b.Count){b.Id=existing.Id;b.TaskId=existing.TaskId;}
     if(b.Category=="식사"&&dialog.AutoMeal)b.MealId=GridEngine.DetectMeal(Day,GridPlan,b);
     if(string.IsNullOrEmpty(b.TemplateId))Defaults(b);AssignPreservingScores(selected,b);
    }

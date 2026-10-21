@@ -20,7 +20,7 @@ namespace Ara {
   public ContextMenuStrip CreateCategoryMenu(CellSelection selected){
    var menu=new ContextMenuStrip{Font=Theme.Font(10),ShowImageMargin=false};menu.PreviewKeyDown+=(s,e)=>{if(e.KeyCode==Keys.Delete)e.IsInputKey=true;};menu.KeyDown+=(s,e)=>{if(e.KeyCode==Keys.Delete){menu.Close();DeleteSelected();e.Handled=true;e.SuppressKeyPress=true;}};
    foreach(string label in CategoryCatalog.Keys(Data)){string categoryName=label;var item=new ToolStripMenuItem(CategoryCatalog.Label(Data.CategorySettings,label));item.Click+=(s,e)=>ApplyCategory(selected,categoryName);menu.Items.Add(item);}
-   menu.Items.Add(new ToolStripSeparator());menu.Items.Add("블록 길이 조절",null,(s,e)=>ShowLengthMenu(selected));menu.Items.Add("카테고리 관리",null,(s,e)=>ManageCategories());menu.Items.Add("상세입력",null,(s,e)=>ShowAssignment(selected,null));Theme.ApplyMenu(menu);return menu;
+   ChecklistMenu(menu,selected);menu.Items.Add(new ToolStripSeparator());menu.Items.Add("블록 길이 조절",null,(s,e)=>ShowLengthMenu(selected));menu.Items.Add("카테고리 관리",null,(s,e)=>ManageCategories());menu.Items.Add("상세입력",null,(s,e)=>ShowAssignment(selected,null));Theme.ApplyMenu(menu);return menu;
   }
   public void ShowCategories(){
    var selected=Board.Selection;if(selected==null)return;Board.ResetScoreKeys();if(categoryMenu!=null){categoryMenu.Close();categoryMenu.Dispose();}var menu=CreateCategoryMenu(selected);categoryMenu=menu;menu.Closed+=(s,e)=>Diagnostics.Action("menu-close",e.CloseReason.ToString());Diagnostics.Action("menu-open");

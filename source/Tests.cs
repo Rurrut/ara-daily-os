@@ -53,7 +53,7 @@ namespace Ara {
    BlockFeatureTests.Run(Check,dir);
    BufferPriorityTests.Run(Check,dir);
    SplitBufferTests.Run(Check,dir); ConnectedTests.Run(Check,dir); QrPairTests.Run(Check,dir); ReplicaTests.Run(Check,dir); NotionHubTests.Run(Check,dir);
-   AdherenceTests.Run(Check,dir);
+   AdherenceTests.Run(Check,dir);ChecklistTests.Run(Check,dir);
    Check("UI event loop has no unhandled exceptions",()=>Assert(Diagnostics.UiErrorCount==0,"UI failures: "+Diagnostics.UiErrorCount));
    File.WriteAllLines(Path.Combine(dir,"test-results.txt"),results.Concat(new[]{"RESULT "+results.Count(x=>x.StartsWith("PASS"))+"/"+results.Count+" passed"}),System.Text.Encoding.UTF8);
    return results.Any(x=>x.StartsWith("FAIL"))?1:0;

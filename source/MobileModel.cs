@@ -11,15 +11,15 @@ using System.Collections.Generic;
 namespace Ara {
  [DataContract] public class RemoteReceipt {[DataMember] public string id,hash;}
  [DataContract] public class PhoneCommand {
-  [DataMember] public string op,date,baseRevision,requestId,category,name,mealId,sourceId,id,color;
-  [DataMember] public bool hidden;
+  [DataMember] public string op,date,baseRevision,requestId,category,name,mealId,sourceId,id,color,taskId;
+  [DataMember] public bool hidden,done;
   [DataMember] public int position;
   [DataMember] public decimal satisfaction;
   [DataMember] public int lane,first,last;
   [DataMember] public decimal score;
  }
  [DataContract] public class PhoneBlock {
-  [DataMember] public string id,name,category,mealId,templateId,prepFor;
+  [DataMember] public string id,name,category,mealId,templateId,prepFor,taskId;
   [DataMember] public int start,count;
   [DataMember] public decimal score,satisfaction;
  }
@@ -43,11 +43,11 @@ namespace Ara {
   public static byte[] Json<T>(T value){using(var m=new MemoryStream()){new DataContractJsonSerializer(typeof(T)).WriteObject(m,value);return m.ToArray();}}
   public static T Read<T>(byte[] body){using(var m=new MemoryStream(body))return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(m);}
   public static string Hash(byte[] body){using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(body)).Replace("-","").ToLowerInvariant();}
-  public static string CommandHash(PhoneCommand command){var copy=Read<PhoneCommand>(Json(command));copy.baseRevision="";if(new[]{"resize","satisfaction","category-save","satisfaction-settings"}.Contains(command.op))return Hash(Json(copy));return Hash(Json(Read<LegacyPhoneCommand>(Json(copy))));}
+  public static string CommandHash(PhoneCommand command){var copy=Read<PhoneCommand>(Json(command));copy.baseRevision="";if(new[]{"resize","satisfaction","category-save","satisfaction-settings","task-record","task-save","task-done","task-delete"}.Contains(command.op))return Hash(Json(copy));return Hash(Json(Read<LegacyPhoneCommand>(Json(copy))));}
   public static DateTime Date(string key){DateTime date;if(!DateTime.TryParseExact(key,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,out date))throw new InvalidDataException("날짜를 확인해 주세요.");return date;}
   public static PhoneDay Snapshot(State state,string key){
    var s=Store.Clone(state);var day=s.GetDay(Date(key));var plan=GridEngine.Build(s,day);DateTime origin=day.Wake.Date;Func<DateTime,int> index=t=>(int)((t-origin).TotalMinutes/10);
-   Func<CellBlock,PhoneBlock> block=x=>new PhoneBlock{id=x.Id,name=x.Name,category=x.Category,mealId=x.MealId,templateId=x.TemplateId,prepFor=x.PrepFor,start=index(x.Start),count=x.Count,score=x.Score,satisfaction=x.Satisfaction};
+   Func<CellBlock,PhoneBlock> block=x=>new PhoneBlock{id=x.Id,taskId=x.TaskId,name=x.Name,category=x.Category,mealId=x.MealId,templateId=x.TemplateId,prepFor=x.PrepFor,start=index(x.Start),count=x.Count,score=x.Score,satisfaction=x.Satisfaction};
    var ah=Adherence.Report(day);var view=new PhoneDay{adherenceScore=Adherence.Score(day),adherenceCount=Convert.ToInt32(ah["evaluated_actions"]),adherenceDetails=JsonMap.Write(ah["actions"]),date=key,wake=index(day.Wake),wakeConfirmed=SatisfactionPolicy.WakeConfirmed(day),blankSatisfaction=s.BlankSatisfaction,excludeBlankSatisfaction=s.ExcludeBlankSatisfaction,satisfactionMinutes=SatisfactionPolicy.Calculate(s,day,Adaptive.EstimatedSleep(s,day,plan),DateTime.Now).Minutes,sleep=index(Adaptive.EstimatedSleep(s,day,plan)),target=index(Adaptive.Target(s,day)),overflow=plan.Overflow,total=GridEngine.Total(day),categories=CategoryCatalog.Keys(s),categorySettings=s.CategorySettings,satisfactionAverage=GridEngine.SatisfactionAverage(s,day,plan),adjustments=plan.Changes.ToArray(),planned=plan.DisplayBlocks.Select(block).ToList(),actual=day.Records.OrderBy(x=>x.Start).Select(block).ToList()};view.lightsStart=view.sleep-12;decimal metric=view.satisfactionAverage;int elapsed=view.satisfactionMinutes;view.satisfactionAverage=0;view.satisfactionMinutes=0;view.revision=Hash(Json(view));view.satisfactionAverage=metric;view.satisfactionMinutes=elapsed;return view;
   }
  }
@@ -63,6 +63,7 @@ namespace Ara {
    }
   }
   public static void Apply(State s,Day d,PhoneCommand c){
+   if(c.op=="task-save"||c.op=="task-done"||c.op=="task-delete"){Checklist.Edit(s,d.Date,c);return;}
    if(c.op=="satisfaction-settings"){if(c.satisfaction<0||c.satisfaction>5)throw new InvalidDataException("빈칸 만족도는 0~5점입니다.");s.BlankSatisfactionValue=c.satisfaction;s.ExcludeBlankSatisfaction=c.hidden;return;}
    if(c.lane<0||c.lane>1||c.first<0||c.last<c.first||c.last>=288||c.score < -100000||c.score>100000)throw new InvalidDataException("시간 칸 또는 점수를 확인해 주세요.");
    if(!string.IsNullOrEmpty(c.mealId)&&!new[]{"b1","b6","b10","b15","b16"}.Contains(c.mealId))throw new InvalidDataException("끼니 번호를 확인해 주세요.");
@@ -83,7 +84,13 @@ namespace Ara {
     if(c.lane==0){d.GridBase=p.DisplayBlocks.Select(x=>x.Copy()).ToList();GridEngine.MovePlanned(d.GridBase,c.id,start);}else GridEngine.Move(d.Records,c.id,start);return;
    }
    CellBlock entry;
-   if(c.op=="copy"){
+   if(c.op=="task-record"){
+    if(c.lane!=1)throw new InvalidDataException("체크리스트는 실제 칸에 기록해 주세요.");
+    var task=s.Tasks.Find(t=>t.Id==c.taskId);if(task==null)throw new InvalidDataException("할 일을 찾을 수 없습니다.");
+    if(d.Records.Any(b=>GridEngine.Overlap(b,start,start.AddMinutes(count*10))&&b.TaskId!=task.Id))throw new InvalidDataException("다른 기록이 있습니다. 빈 실제 칸을 선택해 주세요.");
+    entry=new CellBlock{Id=Guid.NewGuid().ToString("N"),TaskId=task.Id,Name=task.Text,Category=Checklist.Category(s,task),Start=start,Count=count};Defaults(entry);
+    if(entry.Category=="식사")entry.MealId=GridEngine.DetectMeal(d,p,entry);
+   }else if(c.op=="copy"){
     if(c.lane!=1)throw new InvalidDataException("계획은 실제 칸으로 가져와 주세요.");var source=p.DisplayBlocks.Find(x=>x.Id==c.sourceId);if(source==null)throw new InvalidDataException("계획이 바뀌었습니다. 다시 선택해 주세요.");if(source.Category=="기상"){Wake(s,d,c);return;}entry=source.Copy();entry.Id=Guid.NewGuid().ToString("N");entry.Start=start;entry.Count=count;
    }else if(c.op=="category"||c.op=="detail"){
     if(s.CategorySettings.Any(x=>x.name==c.category&&x.deleted)||!CategoryCatalog.Keys(s,true).Contains(c.category)||c.name!=null&&c.name.Length>250)throw new InvalidDataException("카테고리 또는 내용을 확인해 주세요.");

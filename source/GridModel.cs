@@ -14,6 +14,7 @@ namespace Ara {
   [DataMember] public decimal Score;
   [DataMember] public decimal? SatisfactionValue;
   public decimal Satisfaction{get{return SatisfactionValue??2;}set{SatisfactionValue=value;}}
+  [DataMember] public string TaskId="";
   [DataMember] public string TemplateId="";
   [DataMember] public string MealId="";
   [DataMember] public string PrepFor="";

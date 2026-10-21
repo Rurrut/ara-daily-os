@@ -17,6 +17,7 @@ jobs:
       - run: node mobile/prep-record-tests.cjs
       - run: node mobile/satisfaction-tests.cjs
       - run: node mobile/yogurt-gap-tests.cjs
+      - run: node mobile/checklist-tests.cjs
   windows:
     runs-on: windows-latest
     steps:
