@@ -29,6 +29,7 @@ public class UpdateFeedTests {
   rejects("malformed hash rejected",()->UpdateFeed.validate(manifest().put("apkSha256","x")));
   rejects("invalid native bounds rejected",()->UpdateFeed.validate(manifest().put("minNative",25)));
   rejects("unsafe version label rejected",()->UpdateFeed.validate(manifest().put("versionName","../../payload")));
+  JSONObject older=release(false).put("published_at","2026-10-20T00:00:00Z"),newer=release(false).put("published_at","2026-10-21T00:00:00Z");newer.getJSONArray("assets").getJSONObject(0).put("browser_download_url",UpdateFeed.DOWNLOAD+"newest/ara-update.json");ok(UpdateFeed.locate(new JSONArray().put(older).put(newer).toString()).assets.get("ara-update.json").contains("/newest/"),"latest published release selected independently of API ordering");
   URL.setURLStreamHandlerFactory(protocol->protocol.equals("https")?new URLStreamHandler(){protected URLConnection openConnection(URL u){return new Mock(u);}protected URLConnection openConnection(URL u,Proxy p){return new Mock(u);}}:null);
   requests=0;leaked=false;mode="redirect-ok";ok(new String(UpdateFeed.fetch(offer.apkUrl,100),StandardCharsets.UTF_8).equals("download")&&requests==2,"APK download follows permitted CDN redirect");ok(!leaked,"public requests never send a PC bearer credential");
   mode="redirect-http";requests=0;rejects("HTTPS downgrade rejected",()->UpdateFeed.fetch(offer.apkUrl,100));ok(requests==1,"HTTP redirect blocked before network request");

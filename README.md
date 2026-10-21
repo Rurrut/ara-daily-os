@@ -2,9 +2,9 @@
 
 계획표와 기록표를 한 화면에 놓고, 실제 기록에 따라 남은 하루의 계획을 조정하는 시간관리 프로그램.
 
-[Android APK · Windows 다운로드](https://github.com/Rurrut/ara-daily-os/releases/tag/v2.9-ui.2026102106)
+[Android APK · Windows 다운로드](https://github.com/Rurrut/ara-daily-os/releases/tag/v2.9.1-ui.2026102107)
 
-현재 배포는 Android 2.9·화면 2026102106 사전 공개 버전이다. 릴리스에서 설치 방법과 남은 확인 사항도 함께 볼 수 있다.
+현재 배포는 Android 2.9.1·화면 2026102107 사전 공개 버전이다. 릴리스에서 설치 방법과 남은 확인 사항도 함께 볼 수 있다.
 
 ## 만든 이유
 
