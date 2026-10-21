@@ -65,3 +65,9 @@ java -cp "build/test-classes;C:/tools/json.jar;build/android/classes;C:/Android/
 ```
 
 이 테스트는 테스트 객체 생성에 JDK 내부 API를 사용하므로 JDK 17에서 경고가 출력됩니다. 앱 코드의 의존성은 아닙니다. 실제 휴대폰 로그인·인터넷·백그라운드 실행 검증을 대체하지 않습니다.
+
+## 외부 업데이트 경로 검사
+
+Android 빌드 뒤 앞서 사용한 JVM JSON JAR와 Android classes를 클래스패스에 두고 `tests/UpdateFeedTests.java`를 컴파일해 `ara.daily.UpdateFeedTests`를 실행한다. 공개 카탈로그 선택, 같은 저장소의 자산 연결, 인증 헤더 분리, HTTPS·리디렉션·크기 제한을 대역 HTTP로 검사한다. 네트워크나 PC 인증은 필요하지 않다.
+
+[앱 업데이트 사용·배포 방법](UPDATES.md)

@@ -190,8 +190,11 @@ function notionSheet(){if(E&&R&&(!A.online||R.pending())){showSheet('노션 · A
 }
 function updateSheet(){native?.checkUpdates?.();showSheet('앱 업데이트',root=>{
  const note=document.createElement('p');note.className='form-note';root.append(note);
- const paint=()=>{if(!native?.updateStatus){note.textContent='Android 1.6을 한 번 설치하면 이후 PC 연결로 화면 업데이트를 받을 수 있습니다. APK 변경은 앱 안에서 설치를 요청합니다.';return}try{const s=JSON.parse(native.updateStatus());note.textContent='사용 중인 화면 2026102102\n설치 버전 '+s.installedName+' · PC 버전 '+s.availableName+'\n'+(s.uiReady?'새 화면 준비됨 · 화면 다시 열기를 누르세요':s.busy?'업데이트 확인·다운로드 중':'화면 업데이트는 PC 연결 시 자동으로 준비됩니다')+(s.error?'\n'+s.error:'')}catch{note.textContent='업데이트 상태를 읽지 못했습니다'}};
- paint();root.append(button('PC에서 업데이트 확인',()=>{native?.checkUpdates?.();paint()},'wide secondary'),button('준비된 화면 다시 열기',()=>{if(A.busy||A.gesture||A.conflict){toast('입력 또는 충돌 확인을 먼저 마쳐 주세요');return}native?.reloadUi?.()},'wide secondary'),button('새 APK 설치',()=>{native?.installUpdate?.();paint()},'wide secondary'));
+ const check=button('업데이트 확인',()=>{native?.checkUpdates?.();paint()},'wide secondary');
+ const install=button('앱 업데이트 설치',()=>{native?.installUpdate?.();paint()},'wide');
+ const reload=button('준비된 화면 적용',()=>{if(A.busy||A.gesture||A.conflict){toast('입력 또는 충돌 확인을 먼저 마쳐 주세요');return}native?.reloadUi?.()},'wide secondary');
+ const paint=()=>{if(!native?.updateStatus){note.textContent='앱 업데이트 메뉴를 사용하려면 Android APK를 먼저 설치해 주세요.';check.disabled=install.disabled=true;reload.hidden=true;return}try{const s=JSON.parse(native.updateStatus()),newApp=Number(s.available)>Number(s.installed);note.textContent='설치된 앱 '+s.installedName+' · 최신 앱 '+(s.availableName||'미확인')+'\n'+(s.source?'확인 경로: '+s.source+'\n':'')+(s.activeUi?'사용 중인 화면 '+s.activeUi+'\n':'')+(s.busy?'업데이트 확인·다운로드 중':s.error?s.error:newApp?'앱 업데이트 설치를 눌러 주세요. 화면만 다시 열면 앱 버전은 바뀌지 않습니다.':s.uiReady?'새 화면이 준비됐습니다.':s.checked?'현재 앱이 최신입니다.':'업데이트 확인을 눌러 주세요.')+(!s.internetUpdates?'\n이 설치본은 PC 연결이 필요합니다. 외부 업데이트를 쓰려면 최신 APK를 한 번 설치해 주세요.':'\nPC 연결 없이 인터넷에서 확인할 수 있습니다.');check.disabled=!!s.busy;install.disabled=!!s.busy||!newApp;install.textContent=newApp?'앱 업데이트 설치 · '+s.availableName:'앱 업데이트 설치';reload.hidden=!s.uiReady||newApp;reload.disabled=!!s.busy}catch{note.textContent='업데이트 상태를 읽지 못했습니다';install.disabled=true;reload.hidden=true}};
+ root.append(check,install,reload);paint();
  const timer=setInterval(()=>{if($('sheet').hidden||$('sheetTitle').textContent!=='앱 업데이트'){clearInterval(timer);return}paint()},1000);
 })}
 
