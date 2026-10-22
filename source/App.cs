@@ -59,7 +59,7 @@ namespace Ara {
  public class SettingsDialog:Form {
   State copy;DataGridView grid;NumericUpDown day,threshold,reminder,focus;TextBox work,study; public State Result;
   public SettingsDialog(State state){Shown+=(a,b)=>Theme.Apply(this);
-   copy=Store.Clone(state);Text="ARA 설정";Size=new Size(880,720);MinimumSize=new Size(800,650);StartPosition=FormStartPosition.CenterParent;BackColor=Theme.Bg;Font=Theme.Font(9);
+   copy=Store.Clone(state);Text="Aiary 설정";Size=new Size(880,720);MinimumSize=new Size(800,650);StartPosition=FormStartPosition.CenterParent;BackColor=Theme.Bg;Font=Theme.Font(9);
    var root=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(20),RowCount=4};root.RowStyles.Add(new RowStyle(SizeType.Absolute,205));root.RowStyles.Add(new RowStyle(SizeType.Absolute,35));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,62));Controls.Add(root);
    var options=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=4,RowCount=5};for(int i=0;i<4;i++)options.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,25));
    day=Number(state.DayMinutes,60,1440);threshold=Number(state.ShrinkThreshold,1,240);reminder=Number(state.ReminderMinutes,0,120);focus=Number(state.FocusMinutes,1,240);
@@ -69,7 +69,7 @@ namespace Ara {
    options.Controls.Add(Theme.Label("학습 URL / 문서 / 폴더"),0,3);study=new TextBox{Text=state.StudyLink??"",Dock=DockStyle.Fill};options.Controls.Add(study,1,3);options.SetColumnSpan(study,3);
    var auto=Theme.Button(Startup.Exists()?"자동 시작 끄기":"자동 시작 켜기",(s,e)=>{
     try{if(Startup.Exists()){if(MessageBox.Show(this,"이 앱의 로그인 자동 시작 등록을 해제할까요?","자동 시작",MessageBoxButtons.YesNo)==DialogResult.Yes)Startup.Disable();}
-    else{if(MessageBox.Show(this,"Windows 로그인 시 ARA Daily OS를 트레이에서 실행하도록 현재 사용자 시작프로그램 폴더에 바로가기를 만들까요?","자동 시작 등록 승인",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes)Startup.Enable();}
+    else{if(MessageBox.Show(this,"Windows 로그인 시 Aiary를 트레이에서 실행하도록 현재 사용자 시작프로그램 폴더에 바로가기를 만들까요?","자동 시작 등록 승인",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes)Startup.Enable();}
     ((Button)s).Text=Startup.Exists()?"자동 시작 끄기":"자동 시작 켜기";}catch(Exception ex){MessageBox.Show(this,ex.Message,"자동 시작 오류");}
    });options.Controls.Add(auto,0,4);options.SetColumnSpan(auto,2);
    var portable=Theme.Label("자동 시작은 승인 후 등록 · 관리자 권한 불필요",8);options.Controls.Add(portable,2,4);options.SetColumnSpan(portable,2);root.Controls.Add(options,0,0);
@@ -116,7 +116,7 @@ namespace Ara {
     if(args.Contains("--notification-smoke"))return Tests.NotificationSmoke(args);
     if(args.Contains("--mobile-preview")){var sampleStore=new Store(DataPath(args));var sample=File.Exists(sampleStore.PathName)?sampleStore.Load():State.New();if(!File.Exists(sampleStore.PathName)){var sampleDay=sample.GetDay(DateTime.Today);sampleDay.Wake=DateTime.Today.AddHours(15);}var preview=new MainForm(sampleStore,sample,true);preview.PhoneServer.Dispose();preview.PhoneServer=new MobileServer(preview,19765);preview.Shown+=(s,e)=>{preview.StartPhoneServer(false);File.WriteAllText(Path.Combine(Path.GetDirectoryName(DataPath(args)),"test-pair-code.txt"),preview.PhoneServer.Code);preview.Hide();};Application.Run(preview);return 0;}
     string path=DataPath(args);bool created;using(var mutex=new Mutex(true,"Local\\ARA-Daily-OS-"+StableHash(path),out created)){
-     if(!created&&args.Contains("--show")){var window=FindWindow(null,"ARA Daily OS · 10분 타임테이블");if(window!=IntPtr.Zero){ShowWindow(window,9);SetForegroundWindow(window);}return 0;}if(!created){MessageBox.Show("ARA Daily OS가 이미 실행 중입니다. 트레이 아이콘을 더블클릭해 주세요.");return 0;}
+     if(!created&&args.Contains("--show")){var window=FindWindow(null,"Aiary · 아이어리");if(window!=IntPtr.Zero){ShowWindow(window,9);SetForegroundWindow(window);}return 0;}if(!created){MessageBox.Show("Aiary가 이미 실행 중입니다. 트레이 아이콘을 더블클릭해 주세요.");return 0;}
      var store=new Store(path);var data=store.Load();if(args.Contains("--dark"))data.DarkMode=true;if(data.ScheduleRevision<2&&File.Exists(path))File.Copy(path,Path.Combine(Path.GetDirectoryName(path),"before-routine-update-"+DateTime.Now.ToString("yyyyMMddHHmmssfff")+".json"),false);var form=new MainForm(store,data,false);store.Save(data);
      if(args.Contains("--mobile"))form.Shown+=(s,e)=>{try{form.StartPhoneServer(true);}catch(Exception ex){Diagnostics.Error("mobile-start",ex);}};
      if(args.Contains("--connect"))form.Shown+=(s,e)=>form.BeginInvoke(new Action(()=>form.PhoneConnection()));
@@ -126,7 +126,7 @@ namespace Ara {
    }catch(Exception e){
     Diagnostics.Error("startup-or-test",e);
     if(args.Contains("--self-test")||args.Contains("--smoke")||args.Contains("--verify-data")){try{File.WriteAllText(Path.Combine(Path.GetDirectoryName(DataPath(args)),"fatal-error.txt"),e.ToString());}catch{}return 1;}
-    MessageBox.Show("ARA Daily OS 실행 오류\n"+e.Message,"ARA Daily OS",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
+    MessageBox.Show("Aiary 실행 오류\n"+e.Message,"Aiary",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
    }
   }
   static uint StableHash(string value){uint hash=2166136261;foreach(char c in value.ToLowerInvariant()){hash^=c;hash*=16777619;}return hash;}

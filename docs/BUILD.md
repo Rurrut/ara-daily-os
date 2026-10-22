@@ -71,3 +71,9 @@ java -cp "build/test-classes;C:/tools/json.jar;build/android/classes;C:/Android/
 Android 빌드 뒤 앞서 사용한 JVM JSON JAR와 Android classes를 클래스패스에 두고 `tests/UpdateFeedTests.java`를 컴파일해 `ara.daily.UpdateFeedTests`를 실행한다. 공개 카탈로그 선택, 같은 저장소의 자산 연결, 인증 헤더 분리, HTTPS·리디렉션·크기 제한을 대역 HTTP로 검사한다. 네트워크나 PC 인증은 필요하지 않다.
 
 [앱 업데이트 사용·배포 방법](UPDATES.md)
+
+## Preview 별도 빌드
+
+Android 빌드 명령에 `--edition preview`를 추가하면 별도 패키지 `aiary.preview`, `Aiary Preview` 이름으로 빌드합니다. 기본 빌드는 기존 `ara.daily` 패키지를 유지합니다. 앱 구성 요소는 같은 Java 구현을 사용하되 provider authority, 연결 URI scheme과 업데이트 자산을 나눕니다. 생성 소스는 별도 `--work` 경로에 저장하세요. 두 버전이 같은 서명 키를 사용해도 앱 데이터는 공유되지 않습니다.
+
+`node mobile/preview-tests.cjs`는 초기 설정 검증, 기본 프리셋, 날짜별 동작, 기존 개인 루틴 유지, 지난 계획 고정과 취침 고정을 검사합니다. `tests/EditionFeedTests.java`는 각 빌드의 classes로 따로 실행해 업데이트 선택이 다른 앱으로 넘어가지 않는지 검사합니다.

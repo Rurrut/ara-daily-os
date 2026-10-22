@@ -47,7 +47,7 @@ namespace Ara {
   public static void ReportUiError(Exception error,bool showDialog){
    Error("unhandled-ui",error);if(reporting)return;reporting=true;
    try{bool recovered=false;try{if(Recover!=null)recovered=Recover();}catch(Exception recoveryError){Error("ui-recovery",recoveryError);}
-    if(showDialog)MessageBox.Show("오류를 로그에 기록했습니다.\n"+(recovered?"마지막으로 저장한 상태로 화면을 복구했습니다.":"앱을 다시 실행해 주세요. 저장한 데이터는 유지됩니다.")+"\n\n로그 폴더: "+DirectoryPath,"ARA Daily OS · 오류 기록",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+    if(showDialog)MessageBox.Show("오류를 로그에 기록했습니다.\n"+(recovered?"마지막으로 저장한 상태로 화면을 복구했습니다.":"앱을 다시 실행해 주세요. 저장한 데이터는 유지됩니다.")+"\n\n로그 폴더: "+DirectoryPath,"Aiary · 오류 기록",MessageBoxButtons.OK,MessageBoxIcon.Warning);
    }finally{reporting=false;}
   }
  }

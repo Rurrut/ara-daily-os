@@ -1,10 +1,10 @@
-# ARA Daily OS
+# Aiary · 아이어리
 
 계획표와 기록표를 한 화면에 놓고, 실제 기록에 따라 남은 하루의 계획을 조정하는 시간관리 프로그램.
 
-[Android APK · Windows 다운로드](https://github.com/Rurrut/ara-daily-os/releases/tag/v2.9.2-ui.2026102201)
+[Android APK · Windows 다운로드](https://github.com/Rurrut/ara-daily-os/releases/tag/v2.10.0-ui.2026102202)
 
-현재 배포는 Android 2.9.2·화면 2026102201 사전 공개 버전이다. 릴리스에서 설치 방법과 남은 확인 사항도 함께 볼 수 있다.
+현재 배포는 Android 2.10.0·화면 2026102202 사전 공개 버전이다. 릴리스에서 설치 방법과 남은 확인 사항도 함께 볼 수 있다.
 
 ## 만든 이유
 
@@ -61,3 +61,13 @@ Windows는 C# WinForms, Android는 Java와 WebView, 모바일 화면과 오프�
 구현과 테스트 작성에는 AI의 도움을 받았다. 어떤 동작이 필요한지, 직접 써보니 무엇이 불편했는지와 수정 방향은 이 프로젝트를 사용하는 과정에서 정했다.
 
 [문제를 발견하고 수정한 기록](docs/DEVELOPMENT.md) · [빌드·테스트 방법](docs/BUILD.md) · [검증 범위와 남은 한계](docs/VALIDATION.md) · [외부 라이브러리](THIRD_PARTY_NOTICES.md)
+
+## Aiary Preview
+
+기존 개인용 앱은 `ara.daily` 패키지와 기록을 그대로 유지한 Aiary입니다. 새 사용자 체험용 Aiary Preview는 `aiary.preview`라는 별도 앱으로 함께 설치할 수 있습니다. 기록, 노션 인증, 알림 설정, 화면 업데이트 저장소는 Android 앱별 영역으로 분리됩니다.
+
+Preview 첫 실행에서는 기본 시간표 → 기상/시각/요일 기준 → 기상·취침 → 미리보기 순서로 설정합니다. 자율 생활·일하는 날·공부하는 날·빈 시간표를 제공하며 기기 안에서 기록과 기본 재배치를 수행합니다. 설정의 생활 패턴 메뉴에서 다시 설정할 수 있으며, 기록이 있는 날짜는 재설정하지 않습니다.
+
+현재는 상용화를 위한 초기 체험판입니다. 개인화 학습, 여러 프리셋 관리, 교대근무 순환, Google Calendar, 결제는 아직 구현하지 않았습니다. Preview의 PC 동기화는 연결하지 않았으며 기존 Aiary에서 사용합니다. 노션 저장 위치는 각 앱에서 따로 지정합니다.
+
+[기존 Aiary 업데이트 APK](https://github.com/Rurrut/ara-daily-os/releases/download/v2.10.0-ui.2026102202/Aiary-Android-2.10.0.apk) · [Aiary Preview 새 설치 APK](https://github.com/Rurrut/ara-daily-os/releases/download/v2.10.0-ui.2026102202/Aiary-Preview-Android-0.1.0.apk)

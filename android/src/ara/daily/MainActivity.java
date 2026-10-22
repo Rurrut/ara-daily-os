@@ -24,9 +24,10 @@ public class MainActivity extends Activity {
  private boolean uiHealthy=false,usingCached=false;
  private void showHtml(){try{String html=AppUpdates.cachedHtml(this);usingCached=html!=null;uiHealthy=false;
   if(html==null)html=readAsset("index.html").replace("<link rel=\"stylesheet\" href=\"mobile.css\">","<style>"+readAsset("mobile.css")+"</style>").replace("<script src=\"offline-core.js\"></script>","<script>"+readAsset("offline-core.js")+"</script>").replace("<script src=\"mobile.js\"></script>","<script>"+readAsset("mobile.js")+"</script>");
+  html=html.replace("<head>","<head><script>window.AiaryEdition="+JSONObject.quote(AppEdition.PREVIEW?"preview":"personal")+";</script>");
   web.loadDataWithBaseURL("https://ara.local/",html,"text/html","UTF-8",null);
   if(usingCached)new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(()->{if(!uiHealthy&&web!=null&&!isFinishing()){AppUpdates.failUi(this);showHtml();}},8000);
- }catch(Exception e){web.loadData("<h2>ARA 앱 파일을 읽지 못했습니다.</h2>","text/html","UTF-8");}}
+ }catch(Exception e){web.loadData("<h2>Aiary 앱 파일을 읽지 못했습니다.</h2>","text/html","UTF-8");}}
 
  private String initial="",pendingQr=null;
  private final ExecutorService io=Executors.newFixedThreadPool(2);
@@ -34,7 +35,7 @@ public class MainActivity extends Activity {
  private boolean initialDark(){return getPreferences(MODE_PRIVATE).getBoolean("dark",(getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES);}
  private void applyAppearance(boolean dark){int bg=dark?Color.rgb(16,24,21):Color.rgb(244,246,242);getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setBackgroundColor(bg);getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);if(web!=null)web.setBackgroundColor(bg);}
  private String readAsset(String name)throws IOException{try(InputStream in=getAssets().open(name);ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);return out.toString("UTF-8");}}
- private void intentAddress(Intent intent){Uri data=intent.getData();if(data!=null&&"aradaily".equals(data.getScheme())&&"connect".equals(data.getHost())){String pc=data.getQueryParameter("pc");if(pc!=null&&local(pc))initial=pc;}}
+ private void intentAddress(Intent intent){Uri data=intent.getData();if(data!=null&&(AppEdition.PREVIEW?"aiarypreview":"aradaily").equals(data.getScheme())&&"connect".equals(data.getHost())){String pc=data.getQueryParameter("pc");if(pc!=null&&local(pc))initial=pc;}}
  @Override public void onCreate(Bundle bundle){super.onCreate(bundle);notionHub=NotionHub.get(this);intentAddress(getIntent());getWindow().setStatusBarColor(Color.rgb(244,246,242));getWindow().setNavigationBarColor(Color.rgb(248,250,246));getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
   PhoneReminders.initialize(this);web=new WebView(this);applyAppearance(initialDark());web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);web.setOverScrollMode(View.OVER_SCROLL_NEVER);
   web.setOnApplyWindowInsetsListener((v,insets)->{if(Build.VERSION.SDK_INT>=30){Insets x=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(x.left,x.top,x.right,x.bottom);}else v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});

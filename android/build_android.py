@@ -12,6 +12,7 @@ p.add_argument('--android-jar', required=True)
 p.add_argument('--work', required=True)
 p.add_argument('--keystore', required=True)
 p.add_argument('--out')
+p.add_argument('--edition', choices=['personal','preview'], default='personal')
 a = p.parse_args()
 root = Path(__file__).resolve().parent
 out = Path(a.out).resolve() if a.out else root.parent / 'ARA-Daily-OS.apk'
@@ -33,9 +34,15 @@ for name in ('index.html', 'mobile.css', 'mobile.js', 'offline-core.js'):
     (work / 'assets' / name).write_text((root.parent / 'mobile' / name).read_text(encoding='utf-8-sig'), encoding='utf-8')
 shutil.copyfile(root / 'update-public.der', work / 'assets' / 'update-public.der')
 manifest = work / 'AndroidManifest.xml'
-manifest.write_text((root / 'AndroidManifest.xml').read_text(encoding='utf-8-sig'), encoding='utf-8')
+manifest_text=(root / 'AndroidManifest.xml').read_text(encoding='utf-8-sig')
+if a.edition=='preview':
+    manifest_text=manifest_text.replace('package="ara.daily"','package="aiary.preview"').replace('android:versionCode="27" android:versionName="2.10.0"','android:versionCode="1" android:versionName="0.1.0"').replace('android:label="Aiary · 아이어리"','android:label="Aiary Preview"').replace('android:name=".','android:name="ara.daily.').replace('ara.daily.updates','aiary.preview.updates').replace('android:scheme="aradaily"','android:scheme="aiarypreview"')
+    edition=work/'src/ara/daily/AppEdition.java'
+    text=edition.read_text('utf-8').replace('PREVIEW=false','PREVIEW=true').replace('NATIVE=27','NATIVE=1').replace('VERSION="2.10.0"','VERSION="0.1.0"').replace('"ara-update.json"','"aiary-preview-update.json"').replace('"mobile-update.zip"','"mobile-preview-update.zip"').replace('"ARA-Daily-OS-Android-"','"Aiary-Preview-Android-"')
+    edition.write_text(text,encoding='utf-8')
+manifest.write_text(manifest_text, encoding='utf-8')
 run(tools / 'aapt2.exe', 'compile', '--dir', work / 'res', '-o', work / 'resources.zip')
-run(tools / 'aapt2.exe', 'link', '--java', work / 'src', '-o', work / 'unsigned.apk', '--manifest', manifest, '-I', jar, '-A', work / 'assets', work / 'resources.zip')
+run(tools / 'aapt2.exe', 'link', '--java', work / 'src', '--custom-package', 'ara.daily', '-o', work / 'unsigned.apk', '--manifest', manifest, '-I', jar, '-A', work / 'assets', work / 'resources.zip')
 qr_library = root / 'lib' / 'zxing-core-3.5.3.jar'
 if not qr_library.exists(): raise FileNotFoundError('Bundled ZXing library is missing')
 run(jdk / 'bin/javac.exe', '-encoding', 'UTF-8', '--release', '8', '-classpath', str(jar) + os.pathsep + str(qr_library), '-d', work / 'classes', *list((work / 'src').rglob('*.java')))

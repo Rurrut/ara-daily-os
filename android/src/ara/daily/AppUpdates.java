@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.*;
 
 public final class AppUpdates {
- public static final int UI_VERSION=2026102201, NATIVE_VERSION=26;
+ public static final int UI_VERSION=2026102202, NATIVE_VERSION=AppEdition.NATIVE;
  private static final ExecutorService IO=Executors.newSingleThreadExecutor();
  private static final AtomicBoolean BUSY=new AtomicBoolean();
  private static volatile String server="",token="",error="";
@@ -50,7 +50,7 @@ public final class AppUpdates {
  public static void failUi(Context c){c.getSharedPreferences("ara.updates",0).edit().putInt("failedUi",cachedVersion(c)).apply();error="새 화면을 시작하지 못해 기본 화면으로 복구했습니다.";}
  public static void configure(Context c,String pc,String bearer){server=pc;token=bearer;check(c,false);}
  private static Source pcSource()throws Exception {String pc=server,key=token;if(key.isEmpty())throw new IOException("PC 연결이 없습니다.");JSONObject m=new JSONObject(new String(fetchPc(pc,key,"/api/update",32000),StandardCharsets.UTF_8));UpdateFeed.validate(m);return new Source(m,pc,key);}
- private static Source choose(boolean force)throws Exception {if(force){try{return new Source(UpdateFeed.discover());}catch(Exception internetError){try{return pcSource();}catch(Exception noPc){throw internetError;}}}try{return pcSource();}catch(Exception noPc){return new Source(UpdateFeed.discover());}}
+ private static Source choose(boolean force)throws Exception {if(AppEdition.PREVIEW)return new Source(UpdateFeed.discover());if(force){try{return new Source(UpdateFeed.discover());}catch(Exception internetError){try{return pcSource();}catch(Exception noPc){throw internetError;}}}try{return pcSource();}catch(Exception noPc){return new Source(UpdateFeed.discover());}}
  public static void check(Context c,boolean force){if(!force&&System.currentTimeMillis()-lastCheck<15*60000||!BUSY.compareAndSet(false,true))return;lastCheck=System.currentTimeMillis();Context app=c.getApplicationContext();IO.execute(()->{try{Source source=choose(force);JSONObject m=source.manifest;selected=source;
    if(m.getInt("uiVersion")>cachedVersion(app)&&m.getInt("minNative")<=NATIVE_VERSION&&m.getInt("maxNative")>=NATIVE_VERSION){byte[] bytes=source.ui();signed(app,m,bytes);unpack(bytes);atomic(cache(app),bytes);atomic(meta(app),m.toString().getBytes(StandardCharsets.UTF_8));}error="";
   }catch(Exception e){error=e.getMessage()==null?"업데이트 연결을 확인해 주세요.":e.getMessage();}finally{BUSY.set(false);}});}
@@ -60,8 +60,8 @@ public final class AppUpdates {
   if(!BUSY.compareAndSet(false,true))return;
   IO.execute(()->{try{Source source=selected;JSONObject m=source==null?null:source.manifest;if(m==null||m.getInt("versionCode")<=NATIVE_VERSION)throw new IOException("새 APK를 확인한 뒤 설치해 주세요.");byte[] bytes=source.apk();if(!sha(bytes).equals(m.getString("apkSha256")))throw new IOException("APK 파일이 손상됐습니다.");atomic(apk(activity),bytes);
    PackageManager pm=activity.getPackageManager();PackageInfo next=pm.getPackageArchiveInfo(apk(activity).getPath(),PackageManager.GET_SIGNATURES),current=pm.getPackageInfo(activity.getPackageName(),PackageManager.GET_SIGNATURES);
-   if(next==null||!activity.getPackageName().equals(next.packageName)||next.versionCode<=current.versionCode||next.versionCode!=m.getInt("versionCode")||next.signatures==null||next.signatures.length!=1||current.signatures==null||current.signatures.length!=1||!Arrays.equals(next.signatures[0].toByteArray(),current.signatures[0].toByteArray())){apk(activity).delete();throw new IOException("현재 ARA 앱과 같은 서명의 새 APK가 아닙니다.");}
-   activity.runOnUiThread(()->{try{Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://ara.daily.updates/apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);}catch(Exception e){error="Android 설치 화면을 열지 못했습니다.";}});error="";
+   if(next==null||!activity.getPackageName().equals(next.packageName)||next.versionCode<=current.versionCode||next.versionCode!=m.getInt("versionCode")||next.signatures==null||next.signatures.length!=1||current.signatures==null||current.signatures.length!=1||!Arrays.equals(next.signatures[0].toByteArray(),current.signatures[0].toByteArray())){apk(activity).delete();throw new IOException("현재 Aiary 앱과 같은 서명의 새 APK가 아닙니다.");}
+   activity.runOnUiThread(()->{try{Intent intent=new Intent(Intent.ACTION_VIEW);intent.setDataAndType(Uri.parse("content://"+activity.getPackageName()+".updates/apk"),"application/vnd.android.package-archive");intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);activity.startActivity(intent);}catch(Exception e){error="Android 설치 화면을 열지 못했습니다.";}});error="";
   }catch(Exception e){error=e.getMessage()==null?"APK 업데이트 실패":e.getMessage();}finally{BUSY.set(false);}});
  }
 }
