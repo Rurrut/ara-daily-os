@@ -20,6 +20,7 @@
 /build/
 /dist/
 /test-output/
+/runtime/
 **/__pycache__/
 **/node_modules/
 *.exe

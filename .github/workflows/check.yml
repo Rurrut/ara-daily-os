@@ -30,11 +30,11 @@ jobs:
       - name: Build Windows app
         shell: powershell
         run: .\Build.ps1
-      - name: Test Windows shared engine and UI
+      - name: Test Windows shared engine and storage
         shell: powershell
         run: |
-          $testData = Join-Path $PWD 'test-output\state.json'
-          $testProcess = Start-Process -FilePath '.\ARA Daily OS.exe' -ArgumentList '--self-test', '--data', $testData -WindowStyle Hidden -PassThru
-          if (-not $testProcess.WaitForExit(600000)) { $testProcess.Kill(); throw 'Windows tests timed out' }
-          Get-Content 'test-output\test-results.txt'
-          if ($testProcess.ExitCode -ne 0) { throw 'Windows tests failed' }
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          & $compiler /nologo /target:exe /out:EngineContracts.exe '/reference:ARA Daily OS.exe' engine\WindowsContracts.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Contract harness build failed' }
+          & .\EngineContracts.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Windows contracts failed' }

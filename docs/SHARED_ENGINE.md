@@ -31,3 +31,5 @@ node engine/tests.cjs
 ```
 
 자동 계산 규칙은 기존 개인 루틴과 Preview 수준을 유지한다. 이번 변경 자체가 범용 규칙 편집기, 개인화 학습 또는 캘린더 연동을 구현하는 것은 아니다.
+
+GitHub Windows 검사에서는 `engine/WindowsContracts.cs`로 공통 엔진·저장 계약 68개를 화면 없이 실행한다. 전체 WinForms 자체 검사 326개는 대화형 Windows 세션에서 실행한다. CI의 화면 없는 검사와 실제 로컬 UI 검증을 구분한다.
