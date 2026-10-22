@@ -49,7 +49,13 @@ namespace Ara {
   [DataMember] public string Group;
   [DataMember] public List<string> DoneDates = new List<string>();
  }
+ [DataContract] public class PreviewProfile {
+  [DataMember] public int version,wake,sleep,awakeMinutes;
+  [DataMember] public string mode,template;
+  [DataMember] public bool exercise;
+ }
  [DataContract] public class State {
+  [DataMember(EmitDefaultValue=false)] public PreviewProfile PreviewConfig;
   [DataMember] public int Version = 1;
   [DataMember] public int ScheduleRevision;
   [DataMember] public bool AdaptivePriority;
@@ -107,76 +113,8 @@ namespace Ara {
   public DateTime Target;
  }
  public static class Engine {
-  static List<Slot> Layout(State s, Day d, Dictionary<string,int> durations, List<string> changes) {
-   var result=new List<Slot>();
-   DateTime cursor=d.Wake;
-   foreach(var b in s.Template) {
-    int duration=durations[b.Id];
-    DateTime start=cursor;
-    bool actual=d.Actual.ContainsKey(b.Id);
-    if(actual) {
-     start=d.Actual[b.Id];
-     if(start<d.Wake)throw new InvalidOperationException("실제 시작 시각은 기상 시각보다 빠를 수 없습니다.");
-     if(start<cursor) {
-      DateTime boundary=start;
-      for(int j=result.Count-1;j>=0;j--) {
-       var prev=result[j];
-       if(prev.End<=boundary)break;
-       if(prev.Actual || prev.Done)throw new InvalidOperationException("기록되거나 완료한 일정과 겹칩니다. 앞 일정의 실제 시각이나 완료 표시를 먼저 확인해 주세요.");
-       int trim=(int)Math.Ceiling((prev.End-boundary).TotalMinutes);
-       int remove=Math.Min(trim,prev.Minutes);
-       prev.Minutes-=remove; prev.Cut+=remove;
-       prev.End=boundary;
-       if(prev.Start>boundary)prev.Start=boundary;
-       if(remove>0 && changes!=null)changes.Add(prev.Block.Name+" " +remove+"분 단축 (이른 실제 시작)");
-       boundary=prev.Start;
-      }
-     }
-    }
-    var slot=new Slot{Block=b,Start=start,End=start.AddMinutes(duration),Minutes=duration,Actual=actual,Done=d.Done.Contains(b.Id),Cut=b.Minutes-duration};
-    result.Add(slot); cursor=slot.End;
-   }
-   return result;
-  }
-  public static Plan Build(State s, Day d) {
-   Validate(s);
-   var durations=s.Template.ToDictionary(b=>b.Id,b=>b.Minutes);
-   var initial=Layout(s,d,durations,null);
-   var p=new Plan{Target=d.Wake.AddMinutes(s.DayMinutes)};
-   int debt=Math.Max(0,(int)Math.Ceiling((initial.Last().End-p.Target).TotalMinutes));
-   int lastAnchor=initial.FindLastIndex(x=>x.Actual || x.Done);
-   // Small delays shift the day; only a large overrun spends remaining buffers.
-   if(debt>=s.ShrinkThreshold && lastAnchor>=0) {
-    var eligible=initial.Select((slot,i)=>new {slot,i}).Where(x=>x.i>lastAnchor && x.slot.Block.Priority>0).OrderBy(x=>x.slot.Block.Priority).ThenBy(x=>x.i);
-    foreach(var entry in eligible) {
-     var b=entry.slot.Block;
-     int cut=Math.Min(debt,Math.Max(0,entry.slot.Minutes-b.Minimum));
-     durations[b.Id]-=cut; debt-=cut; p.Saved+=cut;
-     if(cut>0)p.Changes.Add(b.Name+" "+cut+"분 단축 (유동 버퍼)");
-     if(debt==0)break;
-    }
-   }
-   p.Slots=Layout(s,d,durations,p.Changes);
-   p.Overflow=Math.Max(0,(int)Math.Ceiling((p.Slots.Last().End-p.Target).TotalMinutes));
-   return p;
-  }
-  public static void Validate(State s) {
-   if(s!=null&&(s.BlankSatisfaction<0||s.BlankSatisfaction>5))throw new InvalidDataException("빈칸 만족도는 0~5점입니다.");
-   if(s==null || s.Version!=1 || s.Template==null || s.Template.Count==0 || s.Template.Count>100 || s.Days==null || s.Tasks==null)throw new InvalidDataException("지원하지 않거나 잘못된 데이터입니다.");
-   if(s.DayMinutes<60 || s.DayMinutes>1440 || s.ShrinkThreshold<1 || s.ShrinkThreshold>240 || s.ReminderMinutes<0 || s.ReminderMinutes>120 || s.FocusMinutes<1 || s.FocusMinutes>240)throw new InvalidDataException("설정 범위가 올바르지 않습니다.");
-   CategoryCatalog.Validate(s);
-   if(s.RemoteReceipts==null)s.RemoteReceipts=new List<RemoteReceipt>();
-   if(s.RemoteReceipts.Count>128||s.RemoteReceipts.Any(x=>x==null||string.IsNullOrEmpty(x.id)||string.IsNullOrEmpty(x.hash)))throw new InvalidDataException("휴대폰 동기화 기록이 올바르지 않습니다.");
-   var ids=new HashSet<string>();
-   foreach(var b in s.Template)if(string.IsNullOrWhiteSpace(b.Id)||!ids.Add(b.Id)||string.IsNullOrWhiteSpace(b.Name)||b.Minutes<1||b.Minutes>480||b.Minimum<0||b.Minimum>b.Minutes||b.Priority<0||b.Priority>20)throw new InvalidDataException("일정의 이름, 길이, 최소 길이 또는 우선순위를 확인해 주세요.");
-   foreach(var d in s.Days) {
-    DateTime parsed;
-    if(d==null || !DateTime.TryParseExact(d.Date,"yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.None,out parsed) || d.Wake.Date!=parsed.Date || d.Actual==null || d.Done==null || d.Notified==null)throw new InvalidDataException("날짜 기록이 올바르지 않습니다.");
-    GridEngine.Validate(d);
-   }
-   if(s.Days.Select(d=>d.Date).Distinct().Count()!=s.Days.Count)throw new InvalidDataException("날짜 기록이 중복되었습니다.");
-   foreach(var t in s.Tasks)if(t==null || string.IsNullOrWhiteSpace(t.Id) || string.IsNullOrWhiteSpace(t.Text) || t.DoneDates==null)throw new InvalidDataException("과제 데이터가 올바르지 않습니다.");
-  }
+  public static Plan Build(State s,Day d){return SharedEngine.Read<Plan>(SharedEngine.Run("legacy",s,d,null,false)["legacy"]);}
+  public static void Validate(State s){try{SharedEngine.Run("validate",s,null,null,false);}catch(InvalidOperationException error){throw new InvalidDataException(error.Message,error);}}
  }
  public class Store {
   public string PathName;

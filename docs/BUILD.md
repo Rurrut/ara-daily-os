@@ -77,3 +77,9 @@ Android 빌드 뒤 앞서 사용한 JVM JSON JAR와 Android classes를 클래스
 Android 빌드 명령에 `--edition preview`를 추가하면 별도 패키지 `aiary.preview`, `Aiary Preview` 이름으로 빌드합니다. 기본 빌드는 기존 `ara.daily` 패키지를 유지합니다. 앱 구성 요소는 같은 Java 구현을 사용하되 provider authority, 연결 URI scheme과 업데이트 자산을 나눕니다. 생성 소스는 별도 `--work` 경로에 저장하세요. 두 버전이 같은 서명 키를 사용해도 앱 데이터는 공유되지 않습니다.
 
 `node mobile/preview-tests.cjs`는 초기 설정 검증, 기본 프리셋, 날짜별 동작, 기존 개인 루틴 유지, 지난 계획 고정과 취침 고정을 검사합니다. `tests/EditionFeedTests.java`는 각 빌드의 classes로 따로 실행해 업데이트 선택이 다른 앱으로 넘어가지 않는지 검사합니다.
+
+## 공통 JS 엔진을 포함한 Windows 빌드
+
+Node.js 24 실행 파일을 준비한 뒤 `powershell -File .\Build.ps1 -NodePath C:\tools\node.exe`를 실행합니다. PATH에 Node가 있으면 경로 옵션을 생략할 수 있습니다. 생성된 실행 파일과 `runtime` 폴더를 함께 배포해야 합니다. 전역 Node 설치가 없는 PC에서도 ZIP 전체를 풀면 실행됩니다. 런타임 라이선스와 해시도 같은 폴더에 포함합니다.
+
+`node engine/tests.cjs`는 교체 전 C# 결과 63건, 실제 Node 입출력, 엔진 원본 해시, 오류 복구와 잘못된 입력을 검사합니다. Windows 자체 검사에도 같은 기준과 저장 형식 왕복 검사가 포함됩니다. [구조](SHARED_ENGINE.md)

@@ -19,10 +19,22 @@ jobs:
       - run: node mobile/yogurt-gap-tests.cjs
       - run: node mobile/checklist-tests.cjs
       - run: node mobile/preview-tests.cjs
+      - run: node engine/tests.cjs
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
       - name: Build Windows app
         shell: powershell
         run: .\Build.ps1
+      - name: Test Windows shared engine and UI
+        shell: powershell
+        run: |
+          $testData = Join-Path $PWD 'test-output\state.json'
+          $testProcess = Start-Process -FilePath '.\ARA Daily OS.exe' -ArgumentList '--self-test', '--data', $testData -WindowStyle Hidden -PassThru
+          if (-not $testProcess.WaitForExit(600000)) { $testProcess.Kill(); throw 'Windows tests timed out' }
+          Get-Content 'test-output\test-results.txt'
+          if ($testProcess.ExitCode -ne 0) { throw 'Windows tests failed' }
