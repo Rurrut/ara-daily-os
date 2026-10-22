@@ -24,6 +24,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Match current Korean routine fixture timezone
+        shell: powershell
+        run: tzutil /s "Korea Standard Time"
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: '24'
