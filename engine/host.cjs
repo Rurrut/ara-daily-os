@@ -54,5 +54,5 @@ function execute(q){
  return {state:JSON.stringify(E.encode(s)),day:changedDay(d),plan:p?encodePlan(p,d):null,value};
 }
 const input=readline.createInterface({input:process.stdin,crlfDelay:Infinity,terminal:false});
-input.on('line',line=>{let q;try{if(line.length>160*1024*1024)throw Error('공통 엔진 입력이 너무 큽니다');q=JSON.parse(line);const result=execute(q);process.stdout.write(JSON.stringify({id:q.id,ok:true,result})+'\n')}catch(e){process.stdout.write(JSON.stringify({id:q?.id,ok:false,error:e.message||'공통 엔진 계산 실패'})+'\n')}});
+input.on('line',line=>{let q;try{if(line.length>160*1024*1024)throw Error('공통 엔진 입력이 너무 큽니다');q=JSON.parse(line.replace(/^\uFEFF/,''));const result=execute(q);process.stdout.write(JSON.stringify({id:q.id,ok:true,result})+'\n')}catch(e){process.stdout.write(JSON.stringify({id:q?.id,ok:false,error:e.message||'공통 엔진 계산 실패'})+'\n')}});
 input.on('close',()=>process.exit(0));
