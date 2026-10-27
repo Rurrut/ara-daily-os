@@ -18,7 +18,7 @@ namespace Ara {
   public MainForm(Store store,State data,bool smokeMode){
    Store=store;Data=data;Notion=new NotionService(store.PathName);Hub=new NotionHub(store.PathName);Theme.Set(Data.DarkMode);Routine.Upgrade(Data,DateTime.Today);Adaptive.Upgrade(Data);if(Routine.ShortenYogurt(Data,DateTime.Now))Store.Save(Data);CategoryCatalog.Ensure(Data);smoke=smokeMode;Text="Aiary · 아이어리";Icon=SystemIcons.Application;Size=new Size(1390,950);MinimumSize=new Size(1120,800);StartPosition=FormStartPosition.CenterScreen;BackColor=Theme.Bg;Font=Theme.Font(9);AutoScaleMode=AutoScaleMode.Dpi;
    BuildUI();Diagnostics.Context=DiagnosticContext;Diagnostics.Recover=RecoverSavedState;
-   tray=new NotifyIcon{Icon=SystemIcons.Application,Text="Aiary · 아이어리",Visible=!smoke};var menu=new ContextMenuStrip();menu.Items.Add("타임테이블 열기",null,(s,e)=>{Show();WindowState=FormWindowState.Normal;Activate();});menu.Items.Add("완전히 종료",null,(s,e)=>Quit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>{Show();WindowState=FormWindowState.Normal;Activate();};
+   tray=new NotifyIcon{Icon=SystemIcons.Application,Text="Aiary · 아이어리",Visible=!smoke};var menu=new ContextMenuStrip();menu.Items.Add("타임테이블 열기",null,(s,e)=>OpenToday());menu.Items.Add("완전히 종료",null,(s,e)=>Quit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>OpenToday();
    PhoneServer=new MobileServer(this);FormClosed+=(s,e)=>PhoneServer.Dispose();
    Day=Data.GetDay(DefaultDate(Data,DateTime.Now));RefreshAll();Board.Jump(SatisfactionPolicy.WakeConfirmed(Day)?Day.Wake.AddHours(-1):Day.Wake.Date);
    if(!smoke)try{Hub.Automatic=new NotionDiaryAuto(Store.PathName,Hub);Store.Saved=state=>Hub.Automatic.Enqueue(Store.Clone(state));Hub.Automatic.Enqueue(Store.Clone(Data));Hub.Automatic.Poke();FormClosed+=(s,e)=>{Store.Saved=null;Hub.Automatic.Dispose();};}catch(Exception ex){Diagnostics.Error("diary-auto-start",ex);}
@@ -28,6 +28,7 @@ namespace Ara {
   }
   FlowLayoutPanel Row(){return new FlowLayoutPanel{Dock=DockStyle.Fill,WrapContents=false,AutoScroll=false,Margin=Padding.Empty};}
   public static DateTime DefaultDate(State s,DateTime now){var active=s.Days.Where(x=>x.Wake<=now&&x.Wake.Date>=now.Date.AddDays(-1)&&Adaptive.Target(s,x)>=now).OrderByDescending(x=>x.Wake).FirstOrDefault();return active==null?now.Date:DateTime.Parse(active.Date).Date;}
+  void OpenToday(){var today=DefaultDate(Data,DateTime.Now);if(date.Value.Date!=today)date.Value=today;Show();WindowState=FormWindowState.Normal;Activate();}
   void BuildUI(){
    var root=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(18,10,18,10),ColumnCount=1,RowCount=6};
    foreach(int h in new[]{49,47,49,-1,53,26})root.RowStyles.Add(new RowStyle(h<0?SizeType.Percent:SizeType.Absolute,h<0?100:h));Controls.Add(root);

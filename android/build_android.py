@@ -36,9 +36,9 @@ shutil.copyfile(root / 'update-public.der', work / 'assets' / 'update-public.der
 manifest = work / 'AndroidManifest.xml'
 manifest_text=(root / 'AndroidManifest.xml').read_text(encoding='utf-8-sig')
 if a.edition=='preview':
-    manifest_text=manifest_text.replace('package="ara.daily"','package="aiary.preview"').replace('android:versionCode="28" android:versionName="2.11.0"','android:versionCode="2" android:versionName="0.1.1"').replace('android:label="Aiary · 아이어리"','android:label="Aiary Preview"').replace('android:name=".','android:name="ara.daily.').replace('ara.daily.updates','aiary.preview.updates').replace('android:scheme="aradaily"','android:scheme="aiarypreview"')
+    manifest_text=manifest_text.replace('package="ara.daily"','package="aiary.preview"').replace('android:versionCode="29" android:versionName="2.12.0"','android:versionCode="3" android:versionName="0.1.2"').replace('android:label="Aiary · 아이어리"','android:label="Aiary Preview"').replace('android:name=".','android:name="ara.daily.').replace('ara.daily.updates','aiary.preview.updates').replace('android:scheme="aradaily"','android:scheme="aiarypreview"')
     edition=work/'src/ara/daily/AppEdition.java'
-    text=edition.read_text('utf-8').replace('PREVIEW=false','PREVIEW=true').replace('NATIVE=28','NATIVE=2').replace('VERSION="2.11.0"','VERSION="0.1.1"').replace('"ara-update.json"','"aiary-preview-update.json"').replace('"mobile-update.zip"','"mobile-preview-update.zip"').replace('"ARA-Daily-OS-Android-"','"Aiary-Preview-Android-"')
+    text=edition.read_text('utf-8').replace('PREVIEW=false','PREVIEW=true').replace('NATIVE=29','NATIVE=3').replace('VERSION="2.12.0"','VERSION="0.1.2"').replace('"ara-update.json"','"aiary-preview-update.json"').replace('"mobile-update.zip"','"mobile-preview-update.zip"').replace('"ARA-Daily-OS-Android-"','"Aiary-Preview-Android-"')
     edition.write_text(text,encoding='utf-8')
 manifest.write_text(manifest_text, encoding='utf-8')
 run(tools / 'aapt2.exe', 'compile', '--dir', work / 'res', '-o', work / 'resources.zip')
