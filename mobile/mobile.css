@@ -104,7 +104,7 @@ html[data-onboarding=true] .sheet{inset:0;max-height:100%;height:100dvh;border-r
 
 .ara-avatar{display:block;width:34px;height:34px;flex:0 0 34px;margin-left:2px;border-radius:50%;background-color:#fff;background-repeat:no-repeat}.ara-guide{display:flex;align-items:center;gap:9px;margin:6px 10px 0;padding:7px 9px;background:#eaf2e9;border:1px solid #dbe8d9;border-radius:13px;box-shadow:0 2px 7px #2e403508}.ara-guide[hidden]{display:none}.ara-guide-face{display:block;width:42px;height:42px;flex:0 0 42px;border-radius:50%;background-color:#fff;background-repeat:no-repeat}.ara-guide-copy{min-width:0;flex:1}.ara-guide-copy p{margin:0;font-size:11px;line-height:1.45}.ara-guide-actions{display:flex;gap:6px;margin-top:5px}.ara-guide-action{padding:4px 8px;border-radius:8px;background:#dbe9db;font-size:10px;font-weight:650}.ara-guide-action:first-child{background:#28694f;color:#fff}.tile.ara-draft{opacity:.44!important;border:1px dashed #27694f!important;background:#d9e9d9!important;color:#244d36!important;animation:ara-pulse 1.6s ease-in-out infinite alternate}.tile.ara-previous{opacity:.25!important;border:1px dashed #718578!important;background:transparent!important;color:#66786b!important}.lane.actual .tile.ara-previous{display:none}@keyframes ara-pulse{from{filter:saturate(.7)}to{filter:saturate(1.3)}}html[data-theme=dark] .ara-guide{background:#1d3024;border-color:#344a38}html[data-theme=dark] .ara-guide-action{background:#2b4030;color:#dce8dd}html[data-theme=dark] .ara-guide-action:first-child{background:#397b58;color:#fff}html[data-theme=dark] .tile.ara-draft{background:#294330!important;color:#e1eee2!important;border-color:#78a785!important}html[data-theme=dark] .tile.ara-previous{color:#a9b8ac!important;border-color:#607065!important}
 
-/* Adjacent actual time cells form one visual activity block. Numbers are shown once per block. */
+/* Adjacent actual time cells form one visual activity block. */
 .lane.actual{gap:0}
 .lane.actual .tile.activity-block{border-radius:0;border-left-color:transparent;border-right-color:transparent}
 .lane.actual .tile.activity-block-start{border-top-left-radius:8px;border-bottom-left-radius:8px;border-left-color:#ffffff75}
@@ -113,7 +113,19 @@ html[data-onboarding=true] .sheet{inset:0;max-height:100%;height:100dvh;border-r
 .actual-block-overlay{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));pointer-events:none;z-index:1}
 .actual-block-content{grid-row:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:1px 2px;text-align:center;color:var(--tile-ink,#355b44);font-variant-numeric:tabular-nums}
 .actual-block-title{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;line-height:10px;font-weight:700}
-.actual-block-metrics{max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap;font-size:7.5px;line-height:9px;letter-spacing:-.2px;font-weight:650}
-.actual-block-content.compact .actual-block-title{display:none}
-.actual-block-content.compact .actual-block-metrics{font-size:7px;letter-spacing:-.4px}
+.actual-block-info{display:flex;align-items:center;justify-content:center;gap:2px;width:100%;min-width:0;height:9px;line-height:9px}
+.actual-block-content.compact .actual-block-title{font-size:7px;line-height:9px}
+.focus-gauge{display:inline-flex;align-items:center;gap:1px;flex:0 0 auto;height:6px}
+.focus-gauge i{display:block;width:2.5px;height:5px;border-radius:2px;background:currentColor;opacity:.2}
+.focus-gauge i.filled{opacity:.95}
+.satisfaction-face{position:relative;display:inline-block;flex:0 0 9px;width:9px;height:9px;border:1px solid currentColor;border-radius:50%;opacity:.95}
+.satisfaction-face::before{content:"";position:absolute;left:1.5px;top:2px;width:1.5px;height:1.5px;border-radius:50%;background:currentColor;box-shadow:3px 0 currentColor}
+.satisfaction-face::after{content:"";position:absolute;left:1.5px;top:5px;width:4px;height:2px;border-bottom:1px solid currentColor;border-radius:0 0 5px 5px}
+.satisfaction-face[data-score="0"]::after,.satisfaction-face[data-score="1"]::after{top:6px;border-bottom:0;border-top:1px solid currentColor;border-radius:5px 5px 0 0}
+.satisfaction-face[data-score="2"]::after{top:6px;height:0;border:0;border-top:1px solid currentColor;border-radius:0}
+.satisfaction-face[data-score="4"]::after,.satisfaction-face[data-score="5"]::after{height:3px}
+.adherence-compare{position:relative;display:block;flex:1 1 12px;min-width:6px;max-width:32px;height:7px;overflow:hidden}
+.adherence-plan,.adherence-actual{position:absolute;display:block;min-width:2px;height:3px;box-sizing:border-box}
+.adherence-plan{top:0;border:1px dashed currentColor;border-radius:2px;opacity:.8}
+.adherence-actual{bottom:0;border-radius:2px;background:currentColor;opacity:.95}
 .tile.selected{z-index:3}
