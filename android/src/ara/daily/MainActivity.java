@@ -22,14 +22,15 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
  private WebView web; private NotionHub notionHub;
  private boolean uiHealthy=false,usingCached=false;
- private void showHtml(){try{String html=AppUpdates.cachedHtml(this);usingCached=html!=null;uiHealthy=false;
+ private void showHtml(){try{AppUpdates.beginUiLoad();String html=AppUpdates.cachedHtml(this);usingCached=html!=null;uiHealthy=false;
   if(html==null)html=readAsset("index.html").replace("<link rel=\"stylesheet\" href=\"mobile.css\">","<style>"+readAsset("mobile.css")+"</style>").replace("<script src=\"offline-core.js\"></script>","<script>"+readAsset("offline-core.js")+"</script>").replace("<script src=\"mobile.js\"></script>","<script>"+readAsset("mobile.js")+"</script>");
-  html=html.replace("<head>","<head><script>window.AiaryEdition="+JSONObject.quote(AppEdition.PREVIEW?"preview":"personal")+";</script>");
+  html=html.replace("<head>","<head><script>window.AiaryEdition="+JSONObject.quote(AppEdition.PREVIEW?"preview":"personal")+";window.addEventListener('error',function(e){try{if(window.AraNative)AraNative.reportUiError('JS: '+String(e.message||'실행 오류'))}catch(_){}});window.addEventListener('unhandledrejection',function(e){try{if(window.AraNative)AraNative.reportUiError('Promise: '+String(e.reason||'비동기 오류'))}catch(_){}});</script>");
   web.loadDataWithBaseURL("https://ara.local/",html,"text/html","UTF-8",null);
   if(usingCached)new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(()->{if(!uiHealthy&&web!=null&&!isFinishing()){AppUpdates.failUi(this);showHtml();}},8000);
  }catch(Exception e){web.loadData("<h2>Aiary 앱 파일을 읽지 못했습니다.</h2>","text/html","UTF-8");}}
 
  private String initial="",pendingQr=null;
+ void reloadUpdatedUi(){showHtml();}
  private final ExecutorService io=Executors.newFixedThreadPool(2);
  static boolean local(String value){try{Uri u=Uri.parse(value);if(!"http".equals(u.getScheme())||u.getUserInfo()!=null)return false;String h=u.getHost();if(h==null||!h.matches("[0-9.]+"))return false;String[] parts=h.split("\\.");if(parts.length!=4)return false;int[] b=new int[4];for(int i=0;i<4;i++){b[i]=Integer.parseInt(parts[i]);if(b[i]<0||b[i]>255)return false;}return b[0]==10||b[0]==192&&b[1]==168||b[0]==172&&b[1]>=16&&b[1]<=31;}catch(Exception e){return false;}}
  private boolean initialDark(){return getPreferences(MODE_PRIVATE).getBoolean("dark",(getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES);}
@@ -59,6 +60,8 @@ public class MainActivity extends Activity {
 
   @JavascriptInterface public String updateStatus(){return AppUpdates.status(MainActivity.this);}
   @JavascriptInterface public void checkUpdates(){AppUpdates.check(MainActivity.this,true);}
+  @JavascriptInterface public void retryUi(){AppUpdates.retryUi(MainActivity.this);}
+  @JavascriptInterface public void reportUiError(String message){AppUpdates.reportUiError(MainActivity.this,message);}
   @JavascriptInterface public void installUpdate(){runOnUiThread(()->AppUpdates.install(MainActivity.this));}
   @JavascriptInterface public void reloadUi(){runOnUiThread(()->showHtml());}
   @JavascriptInterface public void uiBooted(){runOnUiThread(()->uiHealthy=true);}
