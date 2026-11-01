@@ -128,4 +128,17 @@ html[data-onboarding=true] .sheet{inset:0;max-height:100%;height:100dvh;border-r
 .adherence-plan,.adherence-actual{position:absolute;display:block;min-width:2px;height:3px;box-sizing:border-box}
 .adherence-plan{top:0;border:1px dashed currentColor;border-radius:2px;opacity:.8}
 .adherence-actual{bottom:0;border-radius:2px;background:currentColor;opacity:.95}
+
+/* Ara speaks beside the existing sprite, above the date controls. */
+.ara-stage{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-height:64px;margin:0 0 4px}
+.ara-avatar{width:58px;height:58px;flex:0 0 58px;margin:0;border-radius:50%;background-color:transparent}
+.ara-guide{position:relative;display:block;flex:0 1 auto;min-width:170px;max-width:min(255px,calc(100vw - 93px));min-height:56px;margin:0 3px 0 0;padding:9px 11px;border:1px solid #b9d6bd;border-radius:17px;background:#fffdf5;box-shadow:0 3px 12px #183e2821}
+.ara-guide[hidden]{display:none}
+.ara-guide::after{content:"";position:absolute;right:-7px;top:22px;width:12px;height:12px;transform:rotate(45deg);border-top:1px solid #b9d6bd;border-right:1px solid #b9d6bd;background:#fffdf5}
+.ara-guide-copy p{font-size:12px;line-height:1.4;font-weight:650;overflow-wrap:anywhere}
+.ara-guide-actions{flex-wrap:wrap;margin-top:7px;gap:5px}
+.ara-guide-action{min-height:27px;padding:5px 9px;font-size:11px}
+html[data-theme=dark] .ara-guide{background:#203629;border-color:#668c6c;box-shadow:0 4px 16px #0006}
+html[data-theme=dark] .ara-guide::after{background:#203629;border-color:#668c6c}
+@media(max-width:359px){.ara-stage{gap:6px}.ara-guide{min-width:0;padding:8px 9px}.ara-guide-copy p{font-size:11px}}
 .tile.selected{z-index:3}
