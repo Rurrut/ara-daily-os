@@ -37,37 +37,41 @@ function updateAraGuide(view){
  const avatar=$('araAvatar'),panel=$('araGuide');if(!avatar||!panel)return;
  const now=new Date(),hour=now.getHours(),part=hour<11?'morning':hour<18?'afternoon':'evening';
  setAraFace(avatar,part,'default',58);
- avatar.setAttribute('aria-label',`아라 · ${part==='morning'?'아침':part==='afternoon'?'오후':'저녁'}`);
+ avatar.setAttribute('aria-label',`아라 · ${part==='morning'?'아침':part==='afternoon'?'오후':'저녁'} · 안내 열기 또는 닫기`);
+ avatar.onclick=()=>{if(panel.hidden){A.araBubbleHidden=false;updateAraGuide(A.view)}else{A.araBubbleHidden=true;panel.hidden=true;avatar.setAttribute('aria-expanded','false')}};
+ avatar.setAttribute('aria-expanded','false');
  panel.replaceChildren();panel.hidden=true;
  if(A.date!==keyDate())return;
- let expression='default',message='',actions=[];
+ let expression='default',message='',actions=[],guideKey='';
  if(!view||view.wakeConfirmed===false){
-  expression='smile';message='일어난 시간을 기록하면 오늘 계획을 함께 시작할게요.';
+  expression='smile';message='일어난 시간을 기록하면 오늘 계획을 함께 시작할게요.';guideKey='wake';
  }else{
   const idx=nowIndex(now);if(idx>=view.sleep)return;
   const actual=view.actual||[],plans=(view.planned||[]).filter(b=>b.category!=='기상'&&b.category!=='끼니 준비'&&b.category!=='수면'&&b.start+b.count<=idx&&!actual.some(a=>Math.max(a.start,b.start)<Math.min(a.start+a.count,b.start+b.count))).sort((a,b)=>b.start-a.start);
   if(A.araDraftId){
    expression='smile';const draft=(view.planned||[]).find(b=>b.id===A.araDraftId);
-   if(draft){message=`${caption(draft)} 기록 후보예요. 시간을 맞춘 뒤 칸을 눌러 기록하세요.`;actions=[['후보 닫기',()=>{A.araDraftId='';render()}]]}
+   if(draft){guideKey='draft:'+draft.id;message=`${caption(draft)} 기록 후보예요. 시간을 맞춘 뒤 칸을 눌러 기록하세요.`;actions=[['후보 닫기',()=>{A.araDraftId='';render()}]]}
    else A.araDraftId='';
   }
   if(!message&&plans.length){
    expression='question';const missed=plans[0];
    if(A.araDismissed===A.date+':'+missed.id){setAraFace(avatar,part,'calm',58);return}
-   message=`${caption(missed)} 하셨나요? 실제 시간을 확인해 주세요.`;
+   guideKey='missed:'+missed.id;message=`${caption(missed)} 하셨나요? 실제 시간을 확인해 주세요.`;
    actions=[['네, 했어요',()=>{A.araDraftId=missed.id;render()}],['나중에',()=>{A.araDismissed=A.date+':'+missed.id;persist('ara.dismissed',A.araDismissed);render()}]];
   }else if(!message&&idx>=0&&idx<288&&!find(view,1,idx)&&!find(view,0,idx)&&idx>=view.wake){
    expression='question';
    if(A.araDismissed===A.date+':idle'){setAraFace(avatar,part,'calm',58);return}
-   message='지난 시간은 어떻게 보내셨어요?';
-   actions=[['기록 칸 고르기',()=>{const first=Math.max(view.wake,idx-3);select(1,first,Math.max(first,idx-1),view.revision);contextMenu('category');window.scrollTo({top:document.querySelector(`[data-lane="1"][data-index="${first}"]`)?.getBoundingClientRect().top+window.scrollY-180||0,behavior:'smooth'})}],['괜찮아요',()=>{A.araDismissed=A.date+':idle';persist('ara.dismissed',A.araDismissed);panel.hidden=true}]];
-  }else if(!message){expression='smile';message='오늘도 천천히 함께 해봐요 ♡'}
+   guideKey='idle';message='지난 시간은 어떻게 보내셨어요?';
+   actions=[['기록 칸 고르기',()=>{const first=Math.max(view.wake,idx-3);select(1,first,Math.max(first,idx-1),view.revision);contextMenu('category');window.scrollTo({top:document.querySelector(`[data-lane="1"][data-index="${first}"]`)?.getBoundingClientRect().top+window.scrollY-180||0,behavior:'smooth'})}],['괜찮아요',()=>{A.araDismissed=A.date+':idle';persist('ara.dismissed',A.araDismissed);panel.hidden=true;avatar.setAttribute('aria-expanded','false')}]];
+  }else if(!message){expression='smile';guideKey='greeting';message='오늘도 천천히 함께 해봐요 ♡'}
  }
  setAraFace(avatar,part,expression,58);
+ const messageKey=A.date+':'+guideKey;if(A.araBubbleMessage!==messageKey){A.araBubbleMessage=messageKey;A.araBubbleHidden=false}
+ if(A.araBubbleHidden)return;
  const body=document.createElement('div');body.className='ara-guide-copy';
  const text=document.createElement('p');text.textContent=message;body.append(text);
  if(actions.length){const buttons=document.createElement('div');buttons.className='ara-guide-actions';for(const [label,run] of actions){const b=button(label,run,'');b.className='ara-guide-action';buttons.append(b)}body.append(buttons)}
- panel.append(body);panel.hidden=false
+ panel.append(body);panel.hidden=false;avatar.setAttribute('aria-expanded','true')
 }
 
 function cellRatings(block,index,actions){if(!block)return null;const action=actions.find(a=>a.category===block.category&&a.actual_start<=index*10&&a.actual_end>index*10),format=n=>Number(Number(n).toFixed(1)).toString();const focus=format(block.score??0),satisfaction=format(block.satisfaction??2),adherence=action?format(action.score):'—';return{text:[focus,satisfaction,adherence].join('·'),label:'집중 '+focus+' · 만족 '+satisfaction+' · 이행 '+adherence}}

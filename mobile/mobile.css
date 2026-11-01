@@ -129,12 +129,12 @@ html[data-onboarding=true] .sheet{inset:0;max-height:100%;height:100dvh;border-r
 .adherence-plan{top:0;border:1px dashed currentColor;border-radius:2px;opacity:.8}
 .adherence-actual{bottom:0;border-radius:2px;background:currentColor;opacity:.95}
 
-/* Ara speaks beside the existing sprite, above the date controls. */
-.ara-stage{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-height:64px;margin:0 0 4px}
-.ara-avatar{width:58px;height:58px;flex:0 0 58px;margin:0;border-radius:50%;background-color:transparent}
-.ara-guide{position:relative;display:block;flex:0 1 auto;min-width:170px;max-width:min(255px,calc(100vw - 93px));min-height:56px;margin:0 3px 0 0;padding:9px 11px;border:1px solid #b9d6bd;border-radius:17px;background:#fffdf5;box-shadow:0 3px 12px #183e2821}
+/* Ara floats above the timetable without taking layout space. */
+.ara-stage{position:fixed;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:17;display:flex;align-items:flex-end;justify-content:flex-end;gap:9px;width:max-content;max-width:calc(100vw - 24px);pointer-events:none}
+.ara-avatar{display:block;width:58px;height:58px;flex:0 0 58px;margin:0;padding:0;border:0;border-radius:50%;background-color:transparent;box-shadow:0 3px 12px #162e3540;pointer-events:auto;touch-action:manipulation}
+.ara-guide{position:relative;display:block;flex:0 1 auto;min-width:170px;max-width:min(255px,calc(100vw - 93px));min-height:56px;margin:0 3px 0 0;padding:9px 11px;border:1px solid #b9d6bd;pointer-events:auto;border-radius:17px;background:#fffdf5;box-shadow:0 3px 12px #183e2821}
 .ara-guide[hidden]{display:none}
-.ara-guide::after{content:"";position:absolute;right:-7px;top:22px;width:12px;height:12px;transform:rotate(45deg);border-top:1px solid #b9d6bd;border-right:1px solid #b9d6bd;background:#fffdf5}
+.ara-guide::after{content:"";position:absolute;right:-7px;bottom:21px;width:12px;height:12px;transform:rotate(45deg);border-top:1px solid #b9d6bd;border-right:1px solid #b9d6bd;background:#fffdf5}
 .ara-guide-copy p{font-size:12px;line-height:1.4;font-weight:650;overflow-wrap:anywhere}
 .ara-guide-actions{flex-wrap:wrap;margin-top:7px;gap:5px}
 .ara-guide-action{min-height:27px;padding:5px 9px;font-size:11px}
